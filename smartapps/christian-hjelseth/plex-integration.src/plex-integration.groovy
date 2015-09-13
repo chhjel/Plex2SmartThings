@@ -26,11 +26,12 @@ definition(
     author: "${textAuthor()}",
     description: "${textDesc()}",
     category: "My Apps",
-    iconUrl: "http://1sd3vh2v9afo91q38219tlj1.wpengine.netdna-cdn.com/wp-content/uploads/2015/05/plex-icon-server-big-3b6e2330294017827d0354f0c768a3ab.png",
-    iconX2Url: "http://1sd3vh2v9afo91q38219tlj1.wpengine.netdna-cdn.com/wp-content/uploads/2015/05/plex-icon-server-big-3b6e2330294017827d0354f0c768a3ab.png",
-    iconX3Url: "http://1sd3vh2v9afo91q38219tlj1.wpengine.netdna-cdn.com/wp-content/uploads/2015/05/plex-icon-server-big-3b6e2330294017827d0354f0c768a3ab.png",
+    iconUrl: "http://i.imgur.com/38Y5PbU.png",
+    iconX2Url: "http://i.imgur.com/38Y5PbU.png",
+    iconX3Url: "http://i.imgur.com/38Y5PbU.png",
     oauth: [displayName: "PlexServer", displayLink: ""])
 
+//--------Change App Variables Here!!!--------------
 //Change this to rename the Default App Name
 def appName() { "Plex Integration" }
 //Pretty Self Explanatory
@@ -43,6 +44,8 @@ def appDescription() { "Allows web requests to dim/turn off/on lights when plex 
 def appVersion() { "1.2" }
 //Definitely this one too!
 def versionDate() { "9-13-2015" }
+//--------------------------------------------------
+
 
 preferences {
 	page(name: "configPage") 
@@ -57,7 +60,7 @@ def configPage() {
     
 	dynamicPage(name: "configPage", title: "", install: true, uninstall: true) {    
     	section() {
-        	paragraph "Name: ${textAppName()}\nCreated by: ${textAuthor()}\n${textVersion()}\n${textModified()}\n\n${textDesc()}"
+        	paragraph "Name: ${textAppName()}\nCreated by: ${textAuthor()}\n${textVersion()}\n${textModified()}\n\n${textDesc()}", image: "http://i.imgur.com/38Y5PbU.png"
         }
     	section("Control these bulbs...") {
 			input "hues", "capability.colorControl", title: "Which Hue Bulbs?", required:false, multiple:true
@@ -83,8 +86,8 @@ def configPage() {
 		}
         
         //logging debug only when enabled
-        section(title: "Debug Logging") {
-       		paragraph "If you experiencing issues please enable logging to help troubleshoot"
+        section(title: "Debug Logging", hidden: true, hideable: true) {
+       		paragraph "Please enable debug logging to output logs to the IDE for troubleshoot issues"
             input "debugLogging", "bool", title: "Debug Logging...", required: false, defaultValue: false, refreshAfterSelection: true
             	
             if (debugLogging) { 
