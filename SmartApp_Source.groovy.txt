@@ -156,14 +156,18 @@ def changeMode(newMode) {
 }
 
 def SetSwitchesOn() {
+	logWriter ("SetSwitchesOn")
 	switches?.on()
 }
 def SetSwitchesOff() {
+	logWriter ("SetSwitchesOff")
 	switches?.off()
 }
 def SetHuesLevel(level) {
-	logWriter ("SetHuesLevel: $level")
-	hues*.setLevel(level)
+	if (level != null) {
+		logWriter ("SetHuesLevel: $level")
+		hues*.setLevel(level)
+	}
 }
 
 private def logWriter(value) {
