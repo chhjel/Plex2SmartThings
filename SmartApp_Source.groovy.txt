@@ -45,6 +45,9 @@ def configPage() {
     	section("Control these bulbs...") {
 			input "hues", "capability.colorControl", title: "Which Hue Bulbs?", required:false, multiple:true
 		}
+		section ("..and these dimmers..") {
+			input "dimmers", "capability.switchLevel", multiple: true, required: false
+		}
     	section ("..and these switches..") {
         	input "switches", "capability.switch", multiple: true, required: false
     	}
@@ -55,6 +58,7 @@ def configPage() {
     	}
     	section("Configuration") {
         	input(name: "bSwitchOffOnPause", type: "bool", title: "Turn switches off on pause")
+        	input(name: "bDimOnlyIfOn", type: "bool", title: "Dim bulbs only if they're already on")
         	input(name: "iLevelOnStop", type: "number", title: "Bulb levels on Stop", defaultValue:100)
         	input(name: "iLevelOnPause", type: "number", title: "Bulb levels on Pause", defaultValue:30)
         	input(name: "iLevelOnPlay", type: "number", title: "Bulb levels on Play", defaultValue:0)
@@ -166,10 +170,15 @@ def SetSwitchesOff() {
 def SetHuesLevel(level) {
 	if (level != null) {
 		logWriter ("SetHuesLevel: $level")
-		hues*.setLevel(level)
+		hues.each { hue -> dimIfOn(hue, level) }
+		dimmers.each { dimmer -> dimIfOn(dimmer, level) }
 	}
 }
-
+private def dimIfOn(bulb, level) {
+	if (!bDimOnlyIfOn || "on" == bulb.currentSwitch) {
+		bulb.setLevel(level)
+	}
+}
 private def logWriter(value) {
 	if (state.debugLogging) {
         log.debug "${value}"
