@@ -52,8 +52,8 @@ def configPage() {
         	input "switches", "capability.switch", multiple: true, required: false
     	}
     	section("..and change modes") {
-        	input "pauseMode", "mode", title: "Mode when playing?", required:false
-        	input "playMode", "mode", title: "Mode when paused?", required:false
+        	input "playMode", "mode", title: "Mode when playing?", required:false
+        	input "pauseMode", "mode", title: "Mode when paused?", required:false
         	input "stopMode", "mode", title: "Mode when stopped?", required:false
     	}
     	section("Configuration") {
