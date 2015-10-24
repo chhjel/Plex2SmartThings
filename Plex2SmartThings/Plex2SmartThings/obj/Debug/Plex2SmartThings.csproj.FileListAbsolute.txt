@@ -1,6 +1,0 @@
-D:\iMP\Dev\Git\GitHub\Plex2SmartThings\PlexWatch2SmartThings\Plex2SmartThings\bin\Debug\config.config
-D:\iMP\Dev\Git\GitHub\Plex2SmartThings\PlexWatch2SmartThings\Plex2SmartThings\bin\Debug\Plex2SmartThings.exe
-D:\iMP\Dev\Git\GitHub\Plex2SmartThings\PlexWatch2SmartThings\Plex2SmartThings\bin\Debug\Plex2SmartThings.pdb
-D:\iMP\Dev\Git\GitHub\Plex2SmartThings\PlexWatch2SmartThings\Plex2SmartThings\obj\Debug\Plex2SmartThings.csprojResolveAssemblyReference.cache
-D:\iMP\Dev\Git\GitHub\Plex2SmartThings\PlexWatch2SmartThings\Plex2SmartThings\obj\Debug\Plex2SmartThings.exe
-D:\iMP\Dev\Git\GitHub\Plex2SmartThings\PlexWatch2SmartThings\Plex2SmartThings\obj\Debug\Plex2SmartThings.pdb

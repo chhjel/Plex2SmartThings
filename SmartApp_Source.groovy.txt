@@ -12,6 +12,11 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ *  v1.3 - Added multiple rooms/players support, and config for when trailers play.  
+ *  -------------------------------------
+ *  v1.2 - Added ability to view api info with the App.  Also added ability to toggle debug logging on and off (@tonesto7)
+ *		   Added ability to set certain modes only to trigger switches
+ *  -------------------------------------
  *  v1.1 - Added optional mode changes
  */
  
@@ -29,7 +34,8 @@ definition(
     oauth: [displayName: "PlexServer", displayLink: ""])
 
 preferences {
-	page(name: "configPage") 
+	page(name: "configPage", nextPage: "roomsPage") 
+	page(name: "roomsPage")
 }
 
 //had to move to a dynamic page to handle the possible missing token
@@ -41,28 +47,7 @@ def configPage() {
    	}
     if (state.debugLogging == null) 	{ state.debugLogging = false }
     
-	dynamicPage(name: "configPage", title: "Main Page", install: true, uninstall: true) {    
-    	section("Control these bulbs...") {
-			input "hues", "capability.colorControl", title: "Which Hue Bulbs?", required:false, multiple:true
-		}
-		section ("..and these dimmers..") {
-			input "dimmers", "capability.switchLevel", multiple: true, required: false
-		}
-    	section ("..and these switches..") {
-        	input "switches", "capability.switch", multiple: true, required: false
-    	}
-    	section("..and change modes") {
-        	input "playMode", "mode", title: "Mode when playing?", required:false
-        	input "pauseMode", "mode", title: "Mode when paused?", required:false
-        	input "stopMode", "mode", title: "Mode when stopped?", required:false
-    	}
-    	section("Configuration") {
-        	input(name: "bSwitchOffOnPause", type: "bool", title: "Turn switches off on pause")
-        	input(name: "bDimOnlyIfOn", type: "bool", title: "Dim bulbs only if they're already on")
-        	input(name: "iLevelOnStop", type: "number", title: "Bulb levels on Stop", defaultValue:100)
-        	input(name: "iLevelOnPause", type: "number", title: "Bulb levels on Pause", defaultValue:30)
-        	input(name: "iLevelOnPlay", type: "number", title: "Bulb levels on Play", defaultValue:0)
-    	}
+	dynamicPage(name: "configPage", title: "Plex2SmartThings", uninstall: true) {
         // Enables logging debug only when enabled
         section(title: "Debug Logging") {
        		paragraph "If you experiencing issues please enable logging to help troubleshoot"
@@ -82,8 +67,50 @@ def configPage() {
         	href url: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/appinfo?access_token=${state.accessToken}", 
             		style:"embedded", required:false, title:"API Information", description: "Tap to view Info"
     	}
+		section("Rooms") {
+            paragraph "On the next page you can define up to 5 rooms."
+		}
     }
 }
+
+/*  Rooms Page  */
+def roomsPage() {
+	dynamicPage(name: "roomsPage", title: "Rooms", install: true, uninstall: true) {
+        section("Rooms / Plex player names") {
+            paragraph "Each room can have up to 2 plex player names that control it. You may set the name to * in order to match any player. Only the first matching room will be used."
+            //It didn't work to loop through these. The values didn't save for some reason.
+            input(name: "playerA1", type: "text", title: "Room #1: Plex player name", required:false)
+            input(name: "playerB1", type: "text", title: "Room #1: Plex player name (alternative)", required:false)
+            input(name: "playerA2", type: "text", title: "Room #2: Plex player name", required:false)
+            input(name: "playerB2", type: "text", title: "Room #2: Plex player name (alternative)", required:false)
+            input(name: "playerA3", type: "text", title: "Room #3: Plex player name", required:false)
+            input(name: "playerB3", type: "text", title: "Room #3: Plex player name (alternative)", required:false)
+            input(name: "playerA4", type: "text", title: "Room #4: Plex player name", required:false)
+            input(name: "playerB4", type: "text", title: "Room #4: Plex player name (alternative)", required:false)
+            input(name: "playerA5", type: "text", title: "Room #5: Plex player name", required:false)
+            input(name: "playerB5", type: "text", title: "Room #5: Plex player name (alternative)", required:false)
+        }
+    	for(int i = 1; i <= 5; i++) {
+			section("Devices (room #$i)") {
+				input "hues$i", "capability.colorControl", title: "Hue Bulbs", multiple:true, required:false
+				input "dimmers$i", "capability.switchLevel", title: "Dimmers", multiple: true, required: false
+				input "switches$i", "capability.switch", title:"Switches", multiple: true, required: false
+				input "playMode$i", "mode", title: "Mode when playing", required:false
+				input "pauseMode$i", "mode", title: "Mode when paused", required:false
+				input "stopMode$i", "mode", title: "Mode when stopped", required:false
+			}
+			section("Config (room #$i)") {
+				input(name: "bSwitchOffOnPause$i", type: "bool", title: "Turn switches off on pause")
+				input(name: "bDimOnlyIfOn$i", type: "bool", title: "Dim bulbs only if they're already on")
+				input(name: "bTreatTrailersAsPause$i", type: "bool", title: "Use pause config for movie trailers")
+				input(name: "iLevelOnStop$i", type: "number", title: "Bulb/dimmer levels on Stop", defaultValue:100)
+				input(name: "iLevelOnPause$i", type: "number", title: "Bulb/dimmer levels on Pause", defaultValue:30)
+				input(name: "iLevelOnPlay$i", type: "number", title: "Bulb/dimmer levels on Play", defaultValue:0)
+			}
+		}
+	}
+}
+
 def installed() {
 	log.debug "Installed with settings: ${settings}"
 	initialize()
@@ -127,25 +154,40 @@ def OnCommandRecieved() {
 	def playerName = params.player
 	def mediaType = params.type
 	logWriter ("Plex.$command($userName, $playerName, $mediaType)")
+	
+    //Find the right room from player name
+	def roomIndex = getRoomIndexFromPlayerName(playerName);
+	if(roomIndex == -1) {
+		logWriter ("->Not matching any rooms.")
+        return
+    } else {
+		logWriter ("->Matched room #$roomIndex")
+    }
+    
+    //Translate play to pause if bTreatTrailersAsPause is enabled for this room
+    if(TreatTrailersAsPause(roomIndex) && mediaType == "clip" && command == "onplay") {
+    	command = "onpause"
+		logWriter ("->Is playing trailer, treating it as a pause.")
+    }
     
     if (command == "onplay") {
         changeMode(playMode)
-		SetHuesLevel(iLevelOnPlay)
-        SetSwitchesOff()
+		SetLevels(roomIndex, LevelOnPlay(roomIndex))
+        SetSwitchesOff(roomIndex)
     }
     else if (command == "onpause") {
         changeMode(pauseMode)
-    	SetHuesLevel(iLevelOnPause)
-        if( bSwitchOffOnPause == "true") {
-       		SetSwitchesOff()
+    	SetLevels(roomIndex, LevelOnPause(roomIndex))
+        if(SwitchOffOnPause(roomIndex)) {
+       		SetSwitchesOff(roomIndex)
         } else {
-        	SetSwitchesOn()
+        	SetSwitchesOn(roomIndex)
         }
     }
     else if (command == "onstop") {
         changeMode(stopMode)
-    	SetHuesLevel(iLevelOnStop)
-        SetSwitchesOn()
+    	SetLevels(roomIndex, LevelOnStop(roomIndex))
+        SetSwitchesOn(roomIndex)
     }
 }
 
@@ -158,24 +200,23 @@ def changeMode(newMode) {
         }
     }
 }
-
-def SetSwitchesOn() {
-	logWriter ("SetSwitchesOn")
-	switches?.on()
+def SetSwitchesOn(roomIndex) {
+	logWriter ("SetSwitchesOn($roomIndex)")
+	settings."switches${roomIndex}"?.on()
 }
-def SetSwitchesOff() {
-	logWriter ("SetSwitchesOff")
-	switches?.off()
+def SetSwitchesOff(roomIndex) {
+	logWriter ("SetSwitchesOff($roomIndex)")
+	settings."switches${roomIndex}"?.off()
 }
-def SetHuesLevel(level) {
+def SetLevels(roomIndex, level) {
 	if (level != null) {
-		logWriter ("SetHuesLevel: $level")
-		hues.each { hue -> dimIfOn(hue, level) }
-		dimmers.each { dimmer -> dimIfOn(dimmer, level) }
+		logWriter ("SetLevels($roomIndex, $level)")
+		settings."hues${roomIndex}"?.each { hue -> dimIfOn(roomIndex, hue, level) }
+		settings."dimmers${roomIndex}"?.each { dimmer -> dimIfOn(roomIndex, dimmer, level) }
 	}
 }
-private def dimIfOn(bulb, level) {
-	if (!bDimOnlyIfOn || "on" == bulb.currentSwitch) {
+private def dimIfOn(roomIndex, bulb, level) {
+	if (!DimOnlyIfOn(roomIndex) || "on" == bulb.currentSwitch) {
 		bulb.setLevel(level)
 	}
 }
@@ -183,4 +224,65 @@ private def logWriter(value) {
 	if (state.debugLogging) {
         log.debug "${value}"
     }	
+}
+
+//Couldnt make settings."bDimOnlyIfOn${roomIndex}" work for some reason..
+//Using some functions instead until it's fixed.
+def DimOnlyIfOn(room) {
+	if(room == 1) return bDimOnlyIfOn1
+	else if(room == 2) return bDimOnlyIfOn2
+	else if(room == 3) return bDimOnlyIfOn3
+	else if(room == 4) return bDimOnlyIfOn4
+	else if(room == 5) return bDimOnlyIfOn5
+    else return false
+}
+def TreatTrailersAsPause(room) {
+	if(room == 1) return bTreatTrailersAsPause1
+	else if(room == 2) return bTreatTrailersAsPause2
+	else if(room == 3) return bTreatTrailersAsPause3
+	else if(room == 4) return bTreatTrailersAsPause4
+	else if(room == 5) return bTreatTrailersAsPause5
+    else return false
+}
+def SwitchOffOnPause(room) {
+	if(room == 1) return bSwitchOffOnPause1
+	else if(room == 2) return bSwitchOffOnPause2
+	else if(room == 3) return bSwitchOffOnPause3
+	else if(room == 4) return bSwitchOffOnPause4
+	else if(room == 5) return bSwitchOffOnPause5
+    else return false
+}
+def LevelOnStop(room) {
+	if(room == 1) return iLevelOnStop1
+	else if(room == 2) return iLevelOnStop2
+	else if(room == 3) return iLevelOnStop3
+	else if(room == 4) return iLevelOnStop4
+	else if(room == 5) return iLevelOnStop5
+    else return 0
+}
+def LevelOnPause(room) {
+	if(room == 1) return iLevelOnPause1
+	else if(room == 2) return iLevelOnPause2
+	else if(room == 3) return iLevelOnPause3
+	else if(room == 4) return iLevelOnPause4
+	else if(room == 5) return iLevelOnPause5
+    else return 0
+}
+def LevelOnPlay(room) {
+	if(room == 1) return iLevelOnPlay1
+	else if(room == 2) return iLevelOnPlay2
+	else if(room == 3) return iLevelOnPlay3
+	else if(room == 4) return iLevelOnPlay4
+	else if(room == 5) return iLevelOnPlay5
+    else return 0
+}
+
+//Get the first matching room player name, or the first player with name *.
+def getRoomIndexFromPlayerName(player) {
+    if(playerA1 == "*" || playerA1 == player || playerB1 == "*" || playerB1 == player) return 1;
+    else if(playerA2 == "*" || playerA2 == player || playerB2 == "*" || playerB2 == player) return 1;
+    else if(playerA3 == "*" || playerA3 == player || playerB3 == "*" || playerB3 == player) return 1;
+    else if(playerA4 == "*" || playerA4 == player || playerB4 == "*" || playerB4 == player) return 1;
+    else if(playerA5 == "*" || playerA5 == player || playerB5 == "*" || playerB5 == player) return 1;
+    else return -1;
 }

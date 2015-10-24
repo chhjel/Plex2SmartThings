@@ -44,7 +44,7 @@ namespace Plex2SmartThings
             {
                 if (!ActivePlayerNames.Contains(PlayerStates[i].PlayerName))
                 {
-                    PlayerStates[i].OnStateRetrieved(PlayStates.STOP);
+                    PlayerStates[i].OnStateRetrieved(PlayStates.STOP, PlayerStates[i].Type);
                     if (PlayerStates[i].RequestListRemoval)
                     {
                         PlayerStates[i].AbortThreads = true;
@@ -66,7 +66,7 @@ namespace Plex2SmartThings
             for (int i = 0; i < PlayerStates.Count; i++) {
                 if (PlayerStates[i].PlayerName == playerData.PlayerName) {
                     isInList = true;
-                    PlayerStates[i].OnStateRetrieved(playerData.CurrentState);
+                    PlayerStates[i].OnStateRetrieved(playerData.CurrentState, playerData.Type);
                     break;
                 }
             }
@@ -76,7 +76,7 @@ namespace Plex2SmartThings
             {
                 PlayerStates.Add(playerData);
                 //Forced state change after we just added it, since the state is the same as when it was parsed
-                playerData.OnStateRetrieved(playerData.CurrentState, true);
+                playerData.OnStateRetrieved(playerData.CurrentState, playerData.Type, true);
             }
 
             //Add player to the active list
@@ -126,18 +126,22 @@ namespace Plex2SmartThings
             /// </summary>
             /// <param name="state"></param>
             /// <param name="forced">Overrides the check vs previous state</param>
-            public void OnStateRetrieved(PlayStates state, bool forced=false)
+            public void OnStateRetrieved(PlayStates state, string mediaType, bool forced=false)
             {
-                if (Program.DebugLevel >= 2) Console.WriteLine(UserName + "@'" + PlayerName + "' "+Type+"=> StateRetrieved(" + state.ToString() + ")");
+                if (Program.DebugLevel >= 2) Console.WriteLine(UserName + "@'" + PlayerName + "' " + Type + "=> StateRetrieved(" + state.ToString() + ", " + mediaType + ")");
 
                 //Something weird has happened.. => abort
                 if (state == PlayStates.UNKNOWN) return;
-                //No new state => abort
-                else if (state == CurrentState && !forced) return;
-                //We got a new state
-                else CurrentState = state;
+                //No new state or type => abort unless it's a forced update
+                else if (state == CurrentState && mediaType == Type && !forced) return;
+                //We got a new state/media
+                else
+                {
+                    CurrentState = state;
+                    Type = mediaType;
+                }
 
-                if (Program.DebugLevel >= 1) Console.WriteLine(UserName + "@'" + PlayerName + "' Changed state to: " + state.ToString());
+                if (Program.DebugLevel >= 1) Console.WriteLine(UserName + "@'" + PlayerName + "' Changed state to: " + state.ToString() + ", mediaType is " + mediaType);
 
                 //Select the correct endpoint
                 Delay = Config.GetDelayFor(CurrentState, Type);
