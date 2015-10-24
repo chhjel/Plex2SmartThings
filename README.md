@@ -20,7 +20,7 @@ Integration from Plex to SmartThings, notifying a smartapp when media starts pla
 
 5. Save and publish the app for yourself.
 
-6. Configure the app and note down the API Token and API Endpoint values.
+6. Either configure the app online and note down the API Token and API Endpoint values, or install the app through the SmartThings app and click Api Information to find the token and endpoints.
 ![](https://lh6.googleusercontent.com/IkYz19RC2T47L9kIaROifhE9-U1qY1dUKfvIpfSSZmph8kW-UAYnhDA_3TcYKXZ74PuCu8fqAAjusHkDFoxNSjSscsoFL2QPYJTGIh4UUNOLh6_vJzxY3kU9mCc8qid4VaVoXXk?raw=true)
 
 ### 2. Configure the Plex2SmartThings application
