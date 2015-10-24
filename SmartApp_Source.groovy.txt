@@ -76,38 +76,122 @@ def configPage() {
 /*  Rooms Page  */
 def roomsPage() {
 	dynamicPage(name: "roomsPage", title: "Rooms", install: true, uninstall: true) {
-        section("Rooms / Plex player names") {
+		section("Info") {
             paragraph "Each room can have up to 2 plex player names that control it. You may set the name to * in order to match any player. Only the first matching room will be used."
-            //It didn't work to loop through these. The values didn't save for some reason.
-            input(name: "playerA1", type: "text", title: "Room #1: Plex player name", required:false)
-            input(name: "playerB1", type: "text", title: "Room #1: Plex player name (alternative)", required:false)
-            input(name: "playerA2", type: "text", title: "Room #2: Plex player name", required:false)
-            input(name: "playerB2", type: "text", title: "Room #2: Plex player name (alternative)", required:false)
-            input(name: "playerA3", type: "text", title: "Room #3: Plex player name", required:false)
-            input(name: "playerB3", type: "text", title: "Room #3: Plex player name (alternative)", required:false)
-            input(name: "playerA4", type: "text", title: "Room #4: Plex player name", required:false)
-            input(name: "playerB4", type: "text", title: "Room #4: Plex player name (alternative)", required:false)
-            input(name: "playerA5", type: "text", title: "Room #5: Plex player name", required:false)
-            input(name: "playerB5", type: "text", title: "Room #5: Plex player name (alternative)", required:false)
-        }
-    	for(int i = 1; i <= 5; i++) {
-			section("Devices (room #$i)") {
-				input "hues$i", "capability.colorControl", title: "Hue Bulbs", multiple:true, required:false
-				input "dimmers$i", "capability.switchLevel", title: "Dimmers", multiple: true, required: false
-				input "switches$i", "capability.switch", title:"Switches", multiple: true, required: false
-				input "playMode$i", "mode", title: "Mode when playing", required:false
-				input "pauseMode$i", "mode", title: "Mode when paused", required:false
-				input "stopMode$i", "mode", title: "Mode when stopped", required:false
-			}
-			section("Config (room #$i)") {
-				input(name: "bSwitchOffOnPause$i", type: "bool", title: "Turn switches off on pause")
-				input(name: "bDimOnlyIfOn$i", type: "bool", title: "Dim bulbs only if they're already on")
-				input(name: "bTreatTrailersAsPause$i", type: "bool", title: "Use pause config for movie trailers")
-				input(name: "iLevelOnStop$i", type: "number", title: "Bulb/dimmer levels on Stop", defaultValue:100)
-				input(name: "iLevelOnPause$i", type: "number", title: "Bulb/dimmer levels on Pause", defaultValue:30)
-				input(name: "iLevelOnPlay$i", type: "number", title: "Bulb/dimmer levels on Play", defaultValue:0)
-			}
 		}
+		
+		//It didn't work to loop through anything but devices. The values didn't save for some reason.. Will be fixed later sometime.
+		
+		//ROOM 1
+		section("Rooms #1") {
+            input(name: "playerA1", type: "text", title: "Plex player name", required:false)
+            input(name: "playerB1", type: "text", title: "Plex player name (alternative)", required:false)
+        }
+		section("Devices (room #1)") {
+			input "hues1", "capability.colorControl", title: "Hue Bulbs", multiple:true, required:false
+			input "dimmers1", "capability.switchLevel", title: "Dimmers", multiple: true, required: false
+			input "switches1", "capability.switch", title:"Switches", multiple: true, required: false
+			input "playMode1", "mode", title: "Mode when playing", required:false
+			input "pauseMode1", "mode", title: "Mode when paused", required:false
+			input "stopMode1", "mode", title: "Mode when stopped", required:false
+		}
+		section("Config (room #1)") {
+			input(name: "bSwitchOffOnPause1", type: "bool", title: "Turn switches off on pause")
+			input(name: "bDimOnlyIfOn1", type: "bool", title: "Dim bulbs only if they're already on")
+			input(name: "bTreatTrailersAsPause1", type: "bool", title: "Use pause config for movie trailers")
+			input(name: "iLevelOnStop1", type: "number", title: "Bulb/dimmer levels on Stop", defaultValue:100)
+			input(name: "iLevelOnPause1", type: "number", title: "Bulb/dimmer levels on Pause", defaultValue:30)
+			input(name: "iLevelOnPlay1", type: "number", title: "Bulb/dimmer levels on Play", defaultValue:0)
+		}
+		
+		//ROOM 2
+		section("Rooms #2") {
+            input(name: "playerA2", type: "text", title: "Plex player name", required:false)
+            input(name: "playerB2", type: "text", title: "Plex player name (alternative)", required:false)
+        }
+		section("Devices (room #2)") {
+			input "hues2", "capability.colorControl", title: "Hue Bulbs", multiple:true, required:false
+			input "dimmers2", "capability.switchLevel", title: "Dimmers", multiple: true, required: false
+			input "switches2", "capability.switch", title:"Switches", multiple: true, required: false
+			input "playMode2", "mode", title: "Mode when playing", required:false
+			input "pauseMode2", "mode", title: "Mode when paused", required:false
+			input "stopMode2", "mode", title: "Mode when stopped", required:false
+		}
+		section("Config (room #2)") {
+			input(name: "bSwitchOffOnPause2", type: "bool", title: "Turn switches off on pause")
+			input(name: "bDimOnlyIfOn2", type: "bool", title: "Dim bulbs only if they're already on")
+			input(name: "bTreatTrailersAsPause2", type: "bool", title: "Use pause config for movie trailers")
+			input(name: "iLevelOnStop2", type: "number", title: "Bulb/dimmer levels on Stop", defaultValue:100)
+			input(name: "iLevelOnPause2", type: "number", title: "Bulb/dimmer levels on Pause", defaultValue:30)
+			input(name: "iLevelOnPlay2", type: "number", title: "Bulb/dimmer levels on Play", defaultValue:0)
+		}
+				
+		//ROOM 3
+		section("Rooms #3") {
+            input(name: "playerA3", type: "text", title: "Plex player name", required:false)
+            input(name: "playerB3", type: "text", title: "Plex player name (alternative)", required:false)
+        }
+		section("Devices (room #3)") {
+			input "hues3", "capability.colorControl", title: "Hue Bulbs", multiple:true, required:false
+			input "dimmers3", "capability.switchLevel", title: "Dimmers", multiple: true, required: false
+			input "switches3", "capability.switch", title:"Switches", multiple: true, required: false
+			input "playMode3", "mode", title: "Mode when playing", required:false
+			input "pauseMode3", "mode", title: "Mode when paused", required:false
+			input "stopMode3", "mode", title: "Mode when stopped", required:false
+		}
+		section("Config (room #3)") {
+			input(name: "bSwitchOffOnPause3", type: "bool", title: "Turn switches off on pause")
+			input(name: "bDimOnlyIfOn3", type: "bool", title: "Dim bulbs only if they're already on")
+			input(name: "bTreatTrailersAsPause3", type: "bool", title: "Use pause config for movie trailers")
+			input(name: "iLevelOnStop3", type: "number", title: "Bulb/dimmer levels on Stop", defaultValue:100)
+			input(name: "iLevelOnPause3", type: "number", title: "Bulb/dimmer levels on Pause", defaultValue:30)
+			input(name: "iLevelOnPlay3", type: "number", title: "Bulb/dimmer levels on Play", defaultValue:0)
+		}
+				
+		//ROOM 4
+		section("Rooms #4") {
+            input(name: "playerA4", type: "text", title: "Plex player name", required:false)
+            input(name: "playerB4", type: "text", title: "Plex player name (alternative)", required:false)
+        }
+		section("Devices (room #4)") {
+			input "hues4", "capability.colorControl", title: "Hue Bulbs", multiple:true, required:false
+			input "dimmers4", "capability.switchLevel", title: "Dimmers", multiple: true, required: false
+			input "switches4", "capability.switch", title:"Switches", multiple: true, required: false
+			input "playMode4", "mode", title: "Mode when playing", required:false
+			input "pauseMode4", "mode", title: "Mode when paused", required:false
+			input "stopMode4", "mode", title: "Mode when stopped", required:false
+		}
+		section("Config (room #4)") {
+			input(name: "bSwitchOffOnPause4", type: "bool", title: "Turn switches off on pause")
+			input(name: "bDimOnlyIfOn4", type: "bool", title: "Dim bulbs only if they're already on")
+			input(name: "bTreatTrailersAsPause4", type: "bool", title: "Use pause config for movie trailers")
+			input(name: "iLevelOnStop4", type: "number", title: "Bulb/dimmer levels on Stop", defaultValue:100)
+			input(name: "iLevelOnPause4", type: "number", title: "Bulb/dimmer levels on Pause", defaultValue:30)
+			input(name: "iLevelOnPlay4", type: "number", title: "Bulb/dimmer levels on Play", defaultValue:0)
+		}
+		
+		//ROOM 5
+		section("Rooms #5") {
+            input(name: "playerA5", type: "text", title: "Plex player name", required:false)
+            input(name: "playerB5", type: "text", title: "Plex player name (alternative)", required:false)
+        }
+		section("Devices (room #5)") {
+			input "hues5", "capability.colorControl", title: "Hue Bulbs", multiple:true, required:false
+			input "dimmers5", "capability.switchLevel", title: "Dimmers", multiple: true, required: false
+			input "switches5", "capability.switch", title:"Switches", multiple: true, required: false
+			input "playMode5", "mode", title: "Mode when playing", required:false
+			input "pauseMode5", "mode", title: "Mode when paused", required:false
+			input "stopMode5", "mode", title: "Mode when stopped", required:false
+		}
+		section("Config (room #5)") {
+			input(name: "bSwitchOffOnPause5", type: "bool", title: "Turn switches off on pause")
+			input(name: "bDimOnlyIfOn5", type: "bool", title: "Dim bulbs only if they're already on")
+			input(name: "bTreatTrailersAsPause5", type: "bool", title: "Use pause config for movie trailers")
+			input(name: "iLevelOnStop5", type: "number", title: "Bulb/dimmer levels on Stop", defaultValue:100)
+			input(name: "iLevelOnPause5", type: "number", title: "Bulb/dimmer levels on Pause", defaultValue:30)
+			input(name: "iLevelOnPlay5", type: "number", title: "Bulb/dimmer levels on Play", defaultValue:0)
+		}
+		
 	}
 }
 
