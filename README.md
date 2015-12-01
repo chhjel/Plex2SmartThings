@@ -12,15 +12,13 @@ Integration from Plex to SmartThings, notifying a smartapp when media starts pla
 
 1. Go to https://graph.api.smartthings.com/ide/apps and create a new SmartApp.
 
-2. Fill out the required fields, and at the bottom of the app creation page be sure to enable OAuth by clicking the button "Enable OAuth in the Smart App".
+2. Fill out the required fields.
 
-3. Note down the OAuth client id and secret. You will need both of them for later.
+3. Replace the generated app source code with the code from the file SmartApp_Source.groovy.txt.
 
-4. Replace the apps generated source code with the code from the file SmartApp_Source.groovy.txt.
+4. Save and publish the app for yourself.
 
-5. Save and publish the app for yourself.
-
-6. Either configure the app online and note down the API Token and API Endpoint values, or install the app through the SmartThings app and click Api Information to find the token and endpoints.
+5. Either configure the app online and note down the API Token and API Endpoint values, or install the app through the SmartThings app and click Api Information to find the token and endpoints.
 ![](https://lh6.googleusercontent.com/IkYz19RC2T47L9kIaROifhE9-U1qY1dUKfvIpfSSZmph8kW-UAYnhDA_3TcYKXZ74PuCu8fqAAjusHkDFoxNSjSscsoFL2QPYJTGIh4UUNOLh6_vJzxY3kU9mCc8qid4VaVoXXk?raw=true)
 
 ### 2. Configure the Plex2SmartThings application
