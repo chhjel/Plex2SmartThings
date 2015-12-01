@@ -12,6 +12,8 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ *  v1.4 - Added ability to execute routines. Fixed modes bug.
+ *  -------------------------------------
  *  v1.3 - Added multiple rooms/players support, and config for when trailers play.  
  *  -------------------------------------
  *  v1.2 - Added ability to view api info with the App.  Also added ability to toggle debug logging on and off (@tonesto7)
@@ -82,6 +84,12 @@ def roomsPage() {
 		
 		//It didn't work to loop through anything but devices. The values didn't save for some reason.. Will be fixed later sometime.
 		
+		//Get defined routines
+		def actions = location.helloHome?.getPhrases()*.label
+		if (actions) {
+			actions.sort()
+		}
+		
 		//ROOM 1
 		section("Rooms #1") {
             input(name: "playerA1", type: "text", title: "Plex player name", required:false)
@@ -94,6 +102,11 @@ def roomsPage() {
 			input "playMode1", "mode", title: "Mode when playing", required:false
 			input "pauseMode1", "mode", title: "Mode when paused", required:false
 			input "stopMode1", "mode", title: "Mode when stopped", required:false
+			if (actions) {
+				input "playRoutine1", "enum", title: "Routine when playing", required:false, options: actions
+				input "pauseRoutine1", "enum", title: "Routine when paused", required:false, options: actions
+				input "stopRoutine1", "enum", title: "Routine when stopped", required:false, options: actions
+			}
 		}
 		section("Config (room #1)") {
 			input(name: "bSwitchOffOnPause1", type: "bool", title: "Turn switches off on pause")
@@ -116,6 +129,11 @@ def roomsPage() {
 			input "playMode2", "mode", title: "Mode when playing", required:false
 			input "pauseMode2", "mode", title: "Mode when paused", required:false
 			input "stopMode2", "mode", title: "Mode when stopped", required:false
+			if (actions) {
+				input "playRoutine2", "enum", title: "Routine when playing", required:false, options: actions
+				input "pauseRoutine2", "enum", title: "Routine when paused", required:false, options: actions
+				input "stopRoutine2", "enum", title: "Routine when stopped", required:false, options: actions
+			}
 		}
 		section("Config (room #2)") {
 			input(name: "bSwitchOffOnPause2", type: "bool", title: "Turn switches off on pause")
@@ -138,6 +156,11 @@ def roomsPage() {
 			input "playMode3", "mode", title: "Mode when playing", required:false
 			input "pauseMode3", "mode", title: "Mode when paused", required:false
 			input "stopMode3", "mode", title: "Mode when stopped", required:false
+			if (actions) {
+				input "playRoutine3", "enum", title: "Routine when playing", required:false, options: actions
+				input "pauseRoutine3", "enum", title: "Routine when paused", required:false, options: actions
+				input "stopRoutine3", "enum", title: "Routine when stopped", required:false, options: actions
+			}
 		}
 		section("Config (room #3)") {
 			input(name: "bSwitchOffOnPause3", type: "bool", title: "Turn switches off on pause")
@@ -160,6 +183,11 @@ def roomsPage() {
 			input "playMode4", "mode", title: "Mode when playing", required:false
 			input "pauseMode4", "mode", title: "Mode when paused", required:false
 			input "stopMode4", "mode", title: "Mode when stopped", required:false
+			if (actions) {
+				input "playRoutine4", "enum", title: "Routine when playing", required:false, options: actions
+				input "pauseRoutine4", "enum", title: "Routine when paused", required:false, options: actions
+				input "stopRoutine4", "enum", title: "Routine when stopped", required:false, options: actions
+			}
 		}
 		section("Config (room #4)") {
 			input(name: "bSwitchOffOnPause4", type: "bool", title: "Turn switches off on pause")
@@ -182,6 +210,11 @@ def roomsPage() {
 			input "playMode5", "mode", title: "Mode when playing", required:false
 			input "pauseMode5", "mode", title: "Mode when paused", required:false
 			input "stopMode5", "mode", title: "Mode when stopped", required:false
+			if (actions) {
+				input "playRoutine5", "enum", title: "Routine when playing", required:false, options: actions
+				input "pauseRoutine5", "enum", title: "Routine when paused", required:false, options: actions
+				input "stopRoutine5", "enum", title: "Routine when stopped", required:false, options: actions
+			}
 		}
 		section("Config (room #5)") {
 			input(name: "bSwitchOffOnPause5", type: "bool", title: "Turn switches off on pause")
@@ -191,7 +224,6 @@ def roomsPage() {
 			input(name: "iLevelOnPause5", type: "number", title: "Bulb/dimmer levels on Pause", defaultValue:30)
 			input(name: "iLevelOnPlay5", type: "number", title: "Bulb/dimmer levels on Play", defaultValue:0)
 		}
-		
 	}
 }
 
@@ -255,12 +287,14 @@ def OnCommandRecieved() {
     }
     
     if (command == "onplay") {
-        changeMode(playMode)
+        ChangeMode(PlayMode(roomIndex))
+		ExecRoutine(PlayRoutine(roomIndex))
 		SetLevels(roomIndex, LevelOnPlay(roomIndex))
         SetSwitchesOff(roomIndex)
     }
     else if (command == "onpause") {
-        changeMode(pauseMode)
+        ChangeMode(PauseMode(roomIndex))
+		ExecRoutine(PauseRoutine(roomIndex))
     	SetLevels(roomIndex, LevelOnPause(roomIndex))
         if(SwitchOffOnPause(roomIndex)) {
        		SetSwitchesOff(roomIndex)
@@ -269,13 +303,19 @@ def OnCommandRecieved() {
         }
     }
     else if (command == "onstop") {
-        changeMode(stopMode)
+        ChangeMode(StopMode(roomIndex))
+		ExecRoutine(StopRoutine(roomIndex))
+		ExecStopRoutine(roomIndex)
     	SetLevels(roomIndex, LevelOnStop(roomIndex))
         SetSwitchesOn(roomIndex)
     }
 }
 
-def changeMode(newMode) {
+def ExecRoutine(routine) {
+	if(!routine) return
+	location.helloHome?.execute(routine)
+}
+def ChangeMode(newMode) {
     if (newMode != null && newMode != "" && location.mode != newMode) {
         if (location.modes?.find{it.name == newMode}) {
             setLocationMode(newMode)
@@ -312,6 +352,54 @@ private def logWriter(value) {
 
 //Couldnt make settings."bDimOnlyIfOn${roomIndex}" work for some reason..
 //Using some functions instead until it's fixed.
+def PlayMode(room) {
+	if(room == 1) return playMode1
+	else if(room == 2) return playMode2
+	else if(room == 3) return playMode3
+	else if(room == 4) return playMode4
+	else if(room == 5) return playMode5
+    else return null
+}
+def PauseMode(room) {
+	if(room == 1) return pauseMode1
+	else if(room == 2) return pauseMode2
+	else if(room == 3) return pauseMode3
+	else if(room == 4) return pauseMode4
+	else if(room == 5) return pauseMode5
+    else return null
+}
+def StopMode(room) {
+	if(room == 1) return stopMode1
+	else if(room == 2) return stopMode2
+	else if(room == 3) return stopMode3
+	else if(room == 4) return stopMode4
+	else if(room == 5) return stopMode5
+    else return null
+}
+def PlayRoutine(room) {
+	if(room == 1) return playRoutine1
+	else if(room == 2) return playRoutine2
+	else if(room == 3) return playRoutine3
+	else if(room == 4) return playRoutine4
+	else if(room == 5) return playRoutine5
+    else return null
+}
+def PauseRoutine(room) {
+	if(room == 1) return pauseRoutine1
+	else if(room == 2) return pauseRoutine2
+	else if(room == 3) return pauseRoutine3
+	else if(room == 4) return pauseRoutine4
+	else if(room == 5) return pauseRoutine5
+    else return null
+}
+def StopRoutine(room) {
+	if(room == 1) return stopRoutine1
+	else if(room == 2) return stopRoutine2
+	else if(room == 3) return stopRoutine3
+	else if(room == 4) return stopRoutine4
+	else if(room == 5) return stopRoutine5
+    else return null
+}
 def DimOnlyIfOn(room) {
 	if(room == 1) return bDimOnlyIfOn1
 	else if(room == 2) return bDimOnlyIfOn2
