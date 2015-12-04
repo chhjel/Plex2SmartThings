@@ -12,6 +12,8 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ *  v1.4.1 - Fixed bug.
+ *  -------------------------------------
  *  v1.4 - Added ability to execute routines. Fixed modes bug.
  *  -------------------------------------
  *  v1.3 - Added multiple rooms/players support, and config for when trailers play.  
@@ -305,7 +307,6 @@ def OnCommandRecieved() {
     else if (command == "onstop") {
         ChangeMode(StopMode(roomIndex))
 		ExecRoutine(StopRoutine(roomIndex))
-		ExecStopRoutine(roomIndex)
     	SetLevels(roomIndex, LevelOnStop(roomIndex))
         SetSwitchesOn(roomIndex)
     }
