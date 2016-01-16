@@ -27,7 +27,7 @@
  * 				- Allowing flexible number of "rooms"
  * 		 - Added support for matching against Player Name or User Name or IP Address (IP address requires Jake's modified exe)
  *		 - Added support for on and off switches on the same state change.
- *		 - Added disabled switch to stop automation
+ *		 - Added disabled switch to stop automation.
  *	v2.1 - Removed independent debug logging from child app, now mastered from parent.
  *		 - Fix bug with disable switch
  *		 - Added Hue Colors (First select Hues)
