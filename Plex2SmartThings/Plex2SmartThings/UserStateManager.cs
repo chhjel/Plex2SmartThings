@@ -42,7 +42,7 @@ namespace Plex2SmartThings
             //Now check for any expired events = stopped
             for (int i = 0; i < PlayerStates.Count; i++)
             {
-                if (!ActivePlayerNames.Contains(PlayerStates[i].PlayerName))
+                if (!ActivePlayerNames.Contains(PlayerStates[i].IPAdd))
                 {
                     PlayerStates[i].OnStateRetrieved(PlayStates.STOP, PlayerStates[i].Type);
                     if (PlayerStates[i].RequestListRemoval)
@@ -64,7 +64,7 @@ namespace Plex2SmartThings
             //Notify state update to existing data if any
             bool isInList = false;
             for (int i = 0; i < PlayerStates.Count; i++) {
-                if (PlayerStates[i].PlayerName == playerData.PlayerName) {
+                if (PlayerStates[i].IPAdd == playerData.IPAdd) {
                     isInList = true;
                     PlayerStates[i].OnStateRetrieved(playerData.CurrentState, playerData.Type);
                     break;
@@ -80,7 +80,7 @@ namespace Plex2SmartThings
             }
 
             //Add player to the active list
-            ActivePlayerNames.Add(playerData.PlayerName);
+            ActivePlayerNames.Add(playerData.IPAdd);
         }
 
         public class InstancePlayState
@@ -89,6 +89,7 @@ namespace Plex2SmartThings
             public string PlayerName { get; set; }
             public string UserName { get; set; }
             public string Type { get; set; } //Movie, episode etc. Whatever plex puts in the /Video/@type attribute
+			public string IPAdd { get; set; } //IP Address of player
 
             public bool RequestListRemoval { get; private set; }
 
@@ -103,6 +104,7 @@ namespace Plex2SmartThings
                 UserName = video.Element("User").Attribute("title").Value;
                 PlayerName = video.Element("Player").Attribute("title").Value;
                 Type = video.Attribute("type").Value;
+				IPAdd = video.Element("Player").Attribute("address").Value;
 
                 if (!CanProcess(UserName, PlayerName, Type)) return false;
 
@@ -128,7 +130,7 @@ namespace Plex2SmartThings
             /// <param name="forced">Overrides the check vs previous state</param>
             public void OnStateRetrieved(PlayStates state, string mediaType, bool forced=false)
             {
-                if (Program.DebugLevel >= 2) Console.WriteLine(UserName + "@'" + PlayerName + "' " + Type + "=> StateRetrieved(" + state.ToString() + ", " + mediaType + ")");
+				if (Program.DebugLevel >= 2) Console.WriteLine(UserName + "@'" + PlayerName + "' " + Type + "=> StateRetrieved(" + state.ToString() + ", " + mediaType + ")");
 
                 //Something weird has happened.. => abort
                 if (state == PlayStates.UNKNOWN) return;
@@ -141,7 +143,7 @@ namespace Plex2SmartThings
                     Type = mediaType;
                 }
 
-                if (Program.DebugLevel >= 1) Console.WriteLine(UserName + "@'" + PlayerName + "' Changed state to: " + state.ToString() + ", mediaType is " + mediaType);
+				if (Program.DebugLevel >= 1) Console.WriteLine(UserName + "@'" + PlayerName + "' (" + IPAdd + ") Changed state to: " + state.ToString() + ", mediaType is " + mediaType);
 
                 //Select the correct endpoint
                 Delay = Config.GetDelayFor(CurrentState, Type);
@@ -206,6 +208,7 @@ namespace Plex2SmartThings
                 endpoint += "&player=" + HttpUtility.UrlEncode(PlayerName);
                 endpoint += "&user=" + HttpUtility.UrlEncode(UserName);
                 endpoint += "&type=" + HttpUtility.UrlEncode(Type);
+				endpoint += "&ipadd=" + HttpUtility.UrlEncode(IPAdd);
 
                 return endpoint;
             }
@@ -216,7 +219,7 @@ namespace Plex2SmartThings
             /// <param name="user"></param>
             /// <param name="player"></param>
             /// <returns></returns>
-            private bool CanProcess(string user, string player, string type)
+			private bool CanProcess(string user, string player, string type)
             {
                 //Both blank => not allowed
                 if (String.IsNullOrEmpty(user) && String.IsNullOrEmpty(player)) return false;

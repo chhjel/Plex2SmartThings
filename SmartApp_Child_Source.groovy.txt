@@ -1,0 +1,241 @@
+/**
+ *  Plex Plus Child
+ *
+ *  Copyright 2015 Christian Hjelseth / Jake Tebbett
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License. You may obtain a copy of the License at:
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ *  for the specific language governing permissions and limitations under the License.
+ *
+ * INSTALL
+ * ###############
+ *
+ *	- Install both parent and cild apps via IDE - Only publish the parent App (This App)
+ *	- Enable OAuth in IDE on the parent App (This App)
+ *  - Setup the Plex2SmartThings.exe (For IP matching Jake's modified exe is required)
+ * 
+ * VERSION CONTROL - Plex Plus Child
+ * ###############
+ *
+ *  v2.0  - Modified Christian Hjelseth's excellent Smart App to use parent & child apps
+ * 				- Allowing multi room matching to a single player
+ * 				- Allowing flexible number of "rooms"
+ * 		 - Added support for matching against Player Name or User Name or IP Address (IP address requires Jake's modified exe)
+ *		 - Added support for on and off switches on the same state change.
+ *		 - Added disabled switch to stop automation	
+ *
+ */
+
+
+
+definition(
+    name: "Plex Plus Child",
+    namespace: "jebbett",
+    author: "Christian Hjelseth & Jacob Tebbett",
+    description: "Allows web requests to dim/turn off/on lights when plex is playing",
+    category: "My Apps",
+    parent: "jebbett:Plex Plus",
+    iconUrl: "http://1sd3vh2v9afo91q38219tlj1.wpengine.netdna-cdn.com/wp-content/uploads/2015/05/plex-icon-server-big-3b6e2330294017827d0354f0c768a3ab.png",
+    iconX2Url: "http://1sd3vh2v9afo91q38219tlj1.wpengine.netdna-cdn.com/wp-content/uploads/2015/05/plex-icon-server-big-3b6e2330294017827d0354f0c768a3ab.png",
+    iconX3Url: "http://1sd3vh2v9afo91q38219tlj1.wpengine.netdna-cdn.com/wp-content/uploads/2015/05/plex-icon-server-big-3b6e2330294017827d0354f0c768a3ab.png")
+
+
+preferences {
+    page name: "mainPage", install: false, uninstall: true
+}
+
+def installed() {
+    log.debug "Installed with settings: ${settings}"
+    initialize()
+}
+
+def updated() {
+    log.debug "Updated with settings: ${settings}"
+    unschedule()
+    initialize()
+}
+
+def initialize() {
+
+}
+
+// Main page to select room settings
+def mainPage() {
+        
+    dynamicPage(name: "mainPage", uninstall: true, install: true) {
+        
+        section("Room Name") {
+                label title: "Enter Room Name", defaultValue: app.label, required: false
+        }
+                
+        section("Info") {
+            paragraph "Each room can have up to 2 plex player identifiers that control it, you can use either Player Device Name, Username or IP address. You may set the name to * in order to match any player."
+		}
+		
+		//Get defined routines
+		def actions = location.helloHome?.getPhrases()*.label
+		if (actions) {
+			actions.sort()
+		}
+		
+		//ROOM
+		section("Players") {
+            input(name: "playerA1", type: "text", title: "Player name, User or IP", required:false)
+            input(name: "playerB1", type: "text", title: "Player name, User or IP (alternative)", required:false)
+        }
+		section("Devices") {
+			input "hues1", "capability.colorControl", title: "Hue Bulbs", multiple:true, required:false
+			input "dimmers1", "capability.switchLevel", title: "Dimmers", multiple: true, required: false
+			input "switches1", "capability.switch", title:"Switches Off", multiple: true, required: false
+            input "switches2", "capability.switch", title:"Switches On", multiple: true, required: false
+			input "playMode1", "mode", title: "Mode when playing", required:false
+			input "pauseMode1", "mode", title: "Mode when paused", required:false
+			input "stopMode1", "mode", title: "Mode when stopped", required:false
+			if (actions) {
+				input "playRoutine1", "enum", title: "Routine when playing", required:false, options: actions
+				input "pauseRoutine1", "enum", title: "Routine when paused", required:false, options: actions
+				input "stopRoutine1", "enum", title: "Routine when stopped", required:false, options: actions
+			}
+		}
+		section("Settings") {
+			input(name: "bSwitchOffOnPause1", type: "bool", title: "Turn switches off on pause")
+			input(name: "bDimOnlyIfOn1", type: "bool", title: "Dim bulbs only if they're already on")
+			input(name: "bTreatTrailersAsPause1", type: "bool", title: "Use pause config for movie trailers")
+			input(name: "iLevelOnStop1", type: "number", title: "Bulb/dimmer levels on Stop", defaultValue:100)
+			input(name: "iLevelOnPause1", type: "number", title: "Bulb/dimmer levels on Pause", defaultValue:30)
+			input(name: "iLevelOnPlay1", type: "number", title: "Bulb/dimmer levels on Play", defaultValue:0)
+            input "disabled", "capability.switch", title: "Switch to disable when ON", required: false, multiple: false
+		}
+        
+        section(title: "Debug Logging") {
+       		paragraph "If you experiencing issues please enable logging to help troubleshoot"
+            input "debugLogging", "bool", title: "Debug Logging...", required: false, defaultValue: false, refreshAfterSelection: true
+            	
+            if (debugLogging) { 
+            	state.debugLogging = true 
+                logWriter("Debug Logging has been ${state.debugLogging.toString().toUpperCase()}")
+                paragraph "Debug Logging is Enabled: ${state.debugLogging}"
+            }
+            else { 
+            	state.debugLogging = false 
+            	logWriter("Debug Logging has been ${state.debugLogging.toString().toUpperCase()}")    
+            }
+    	}
+		
+    }
+}
+
+
+// Recieve command from parent app
+
+def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
+
+//Check if room found
+	def roomFound = findAMatch(playerName, playerIP, userName);
+	if(roomFound == -1) {
+		logWriter ("->Not matching any rooms [$userName @$playerName ($playerIP)]")
+        return
+    } else {
+		logWriter ("->Matched room [$userName @$playerName ($playerIP)]")
+    }
+    
+    
+// Stop running if disable switch is activated    
+
+    if(disabled.currentSwitch == "on") {
+		logWriter ("->Disabled via switch")
+        return
+    }
+    
+//Translate play to pause if bTreatTrailersAsPause is enabled for this room
+    if(bTreatTrailersAsPause1 && mediaType == "clip" && command == "onplay") {
+    	command = "onpause"
+		logWriter ("->Is playing trailer, treating it as a pause.")
+    }
+
+
+// Play, Pause or Stop
+
+    if (command == "onplay") {
+    	logWriter ("->Playing")
+        ChangeMode(playMode1)
+		ExecRoutine(playRoutine1)
+		SetLevels(iLevelOnPlay1)
+        SetSwitchesOff()
+    }
+    else if (command == "onpause") {        
+        logWriter ("->Paused")
+        ChangeMode(pauseMode1)
+		ExecRoutine(pauseRoutine1)
+    	SetLevels(iLevelOnPause1)
+        if(bSwitchOffOnPause1) {
+       		SetSwitchesOff()
+        } else {
+        	SetSwitchesOn()
+        }
+    }
+    else if (command == "onstop") {
+        logWriter ("->Stopped")
+        ChangeMode(stopMode1)
+		ExecRoutine(stopRoutine1)
+    	SetLevels(iLevelOnStop1)
+        SetSwitchesOn()
+    }
+}
+
+// Actions
+
+def ExecRoutine(routine) {
+	if(!routine) return
+	location.helloHome?.execute(routine)
+}
+
+def ChangeMode(newMode) {
+    if (newMode != null && newMode != "" && location.mode != newMode) {
+        if (location.modes?.find{it.name == newMode}) {
+            setLocationMode(newMode)
+        }  else {
+            log.warn "Tried to change to undefined mode '${newMode}'"
+        }
+    }
+}
+
+def SetSwitchesOn() {
+	logWriter ("SetSwitches")
+	settings."switches1"?.on()
+    settings."switches2"?.off()
+}
+def SetSwitchesOff() {
+	logWriter ("SetSwitches")
+	settings."switches1"?.off()
+    settings."switches2"?.on()
+}
+def SetLevels(level) {
+	if (level != null) {
+		logWriter ("SetLevels")
+		settings."hues1"?.each { hue -> dimIfOn(hue, level) }
+		settings."dimmers1"?.each { dimmer -> dimIfOn(dimmer, level) }
+	}
+}
+private def dimIfOn(bulb, level) {
+	if (!bDimOnlyIfOn1 || "on" == bulb.currentSwitch) {
+		bulb.setLevel(level)
+	}
+}
+private def logWriter(value) {
+	if (state.debugLogging) {
+        log.debug "${value}"
+    }	
+}
+
+
+//Is the player, IP or user found
+def findAMatch(player, IP, user) {
+    if(playerA1 == "*" || playerB1 == "*" || playerA1 == player || playerB1 == player || playerA1 == IP || playerB1 == IP || playerA1 == user || playerB1 == user) return 1;
+    else return -1;
+}
