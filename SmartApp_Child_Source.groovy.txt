@@ -22,12 +22,15 @@
  * VERSION CONTROL - Plex Plus Child
  * ###############
  *
- *  v2.0  - Modified Christian Hjelseth's excellent Smart App to use parent & child apps
+ *  v2.0 - Modified Christian Hjelseth's excellent Smart App to use parent & child apps
  * 				- Allowing multi room matching to a single player
  * 				- Allowing flexible number of "rooms"
  * 		 - Added support for matching against Player Name or User Name or IP Address (IP address requires Jake's modified exe)
  *		 - Added support for on and off switches on the same state change.
- *		 - Added disabled switch to stop automation	
+ *		 - Added disabled switch to stop automation
+ *	v2.1 - Removed independent debug logging from child app, now mastered from parent.
+ *		 - Fix bug with disable switch
+ *		 - Added Hue Colors (First select Hues)
  *
  */
 
@@ -69,13 +72,9 @@ def mainPage() {
         
     dynamicPage(name: "mainPage", uninstall: true, install: true) {
         
-        section("Room Name") {
+        section() {
                 label title: "Enter Room Name", defaultValue: app.label, required: false
         }
-                
-        section("Info") {
-            paragraph "Each room can have up to 2 plex player identifiers that control it, you can use either Player Device Name, Username or IP address. You may set the name to * in order to match any player."
-		}
 		
 		//Get defined routines
 		def actions = location.helloHome?.getPhrases()*.label
@@ -87,12 +86,25 @@ def mainPage() {
 		section("Players") {
             input(name: "playerA1", type: "text", title: "Player name, User or IP", required:false)
             input(name: "playerB1", type: "text", title: "Player name, User or IP (alternative)", required:false)
+            paragraph "To identify player, you can use either Player Device Name, Username or IP address. You may set the name to * in order to match any player."
         }
-		section("Devices") {
-			input "hues1", "capability.colorControl", title: "Hue Bulbs", multiple:true, required:false
+		section("Lights (Hue Bubles have Color)") {
 			input "dimmers1", "capability.switchLevel", title: "Dimmers", multiple: true, required: false
-			input "switches1", "capability.switch", title:"Switches Off", multiple: true, required: false
+            input "hues1", "capability.colorControl", title: "Hue Bulbs", multiple:true, required:false, submitOnChange: true
+            if(hues1) {
+				input "colorOnPlay", "enum", title: "Hue Bulbs > Color On Play", required: false, multiple: false, submitOnChange: true,
+					options: ["Soft White", "White", "Daylight", "Warm White", "Red", "Green", "Blue", "Yellow", "Orange", "Purple", "Pink"]
+                input "colorOnPause", "enum", title: "Hue Bulbs > Color On Pause", required: false, multiple: false, submitOnChange: true,
+					options: ["Soft White", "White", "Daylight", "Warm White", "Red", "Green", "Blue", "Yellow", "Orange", "Purple", "Pink"]
+                input "colorOnStop", "enum", title: "Hue Bulbs > Color On Stop", required: false, multiple: false, submitOnChange: true,
+					options: ["Soft White", "White", "Daylight", "Warm White", "Red", "Green", "Blue", "Yellow", "Orange", "Purple", "Pink"]
+            }
+        }
+		section("Switches") {
+            input "switches1", "capability.switch", title:"Switches Off", multiple: true, required: false
             input "switches2", "capability.switch", title:"Switches On", multiple: true, required: false
+        }
+		section("Modes / Routines") {
 			input "playMode1", "mode", title: "Mode when playing", required:false
 			input "pauseMode1", "mode", title: "Mode when paused", required:false
 			input "stopMode1", "mode", title: "Mode when stopped", required:false
@@ -111,22 +123,6 @@ def mainPage() {
 			input(name: "iLevelOnPlay1", type: "number", title: "Bulb/dimmer levels on Play", defaultValue:0)
             input "disabled", "capability.switch", title: "Switch to disable when ON", required: false, multiple: false
 		}
-        
-        section(title: "Debug Logging") {
-       		paragraph "If you experiencing issues please enable logging to help troubleshoot"
-            input "debugLogging", "bool", title: "Debug Logging...", required: false, defaultValue: false, refreshAfterSelection: true
-            	
-            if (debugLogging) { 
-            	state.debugLogging = true 
-                logWriter("Debug Logging has been ${state.debugLogging.toString().toUpperCase()}")
-                paragraph "Debug Logging is Enabled: ${state.debugLogging}"
-            }
-            else { 
-            	state.debugLogging = false 
-            	logWriter("Debug Logging has been ${state.debugLogging.toString().toUpperCase()}")    
-            }
-    	}
-		
     }
 }
 
@@ -138,41 +134,43 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
 //Check if room found
 	def roomFound = findAMatch(playerName, playerIP, userName);
 	if(roomFound == -1) {
-		logWriter ("->Not matching any rooms [$userName @$playerName ($playerIP)]")
+		logWriterChild ("->Not matching any rooms [$userName @ $playerName - $playerIP ]")
         return
     } else {
-		logWriter ("->Matched room [$userName @$playerName ($playerIP)]")
+		logWriterChild ("->Matched room [$userName @ $playerName - $playerIP ]")
     }
     
     
 // Stop running if disable switch is activated    
 
-    if(disabled.currentSwitch == "on") {
-		logWriter ("->Disabled via switch")
-        return
+    if (disabled != null) {
+    	if(disabled.currentSwitch == "on") {
+			logWriterChild ("->Disabled via switch")
+        	return
+        }
     }
     
 //Translate play to pause if bTreatTrailersAsPause is enabled for this room
     if(bTreatTrailersAsPause1 && mediaType == "clip" && command == "onplay") {
     	command = "onpause"
-		logWriter ("->Is playing trailer, treating it as a pause.")
+		logWriterChild ("->Is playing trailer, treating it as a pause.")
     }
 
 
 // Play, Pause or Stop
 
     if (command == "onplay") {
-    	logWriter ("->Playing")
+    	logWriterChild ("->Playing")
         ChangeMode(playMode1)
 		ExecRoutine(playRoutine1)
-		SetLevels(iLevelOnPlay1)
+		SetLevels(iLevelOnPlay1, colorOnPlay)
         SetSwitchesOff()
     }
     else if (command == "onpause") {        
-        logWriter ("->Paused")
+        logWriterChild ("->Paused")
         ChangeMode(pauseMode1)
 		ExecRoutine(pauseRoutine1)
-    	SetLevels(iLevelOnPause1)
+    	SetLevels(iLevelOnPause1, colorOnPause)
         if(bSwitchOffOnPause1) {
        		SetSwitchesOff()
         } else {
@@ -180,10 +178,10 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
         }
     }
     else if (command == "onstop") {
-        logWriter ("->Stopped")
+        logWriterChild ("->Stopped")
         ChangeMode(stopMode1)
 		ExecRoutine(stopRoutine1)
-    	SetLevels(iLevelOnStop1)
+    	SetLevels(iLevelOnStop1, colorOnStop)
         SetSwitchesOn()
     }
 }
@@ -206,31 +204,94 @@ def ChangeMode(newMode) {
 }
 
 def SetSwitchesOn() {
-	logWriter ("SetSwitches")
+	logWriterChild ("SetSwitches")
 	settings."switches1"?.on()
     settings."switches2"?.off()
 }
 def SetSwitchesOff() {
-	logWriter ("SetSwitches")
+	logWriterChild ("SetSwitches")
 	settings."switches1"?.off()
     settings."switches2"?.on()
 }
-def SetLevels(level) {
-	if (level != null) {
-		logWriter ("SetLevels")
-		settings."hues1"?.each { hue -> dimIfOn(hue, level) }
-		settings."dimmers1"?.each { dimmer -> dimIfOn(dimmer, level) }
+def SetLevels(level, acolor) {
+	// If color specified set hues
+    if (acolor != null && level != null) {
+		logWriterChild ("SetColors")
+		settings."hues1"?.each { hue -> setColor(hue, acolor, level) }
 	}
+    else
+    {
+    	if (level != null) {
+			logWriterChild ("SetLevelsWithoutColor")
+			settings."hues1"?.each { hue -> dimIfOn(hue, level) }
+			settings."dimmers1"?.each { dimmer -> dimIfOn(dimmer, level) }
+		}
+    }
 }
+
 private def dimIfOn(bulb, level) {
 	if (!bDimOnlyIfOn1 || "on" == bulb.currentSwitch) {
 		bulb.setLevel(level)
 	}
 }
-private def logWriter(value) {
-	if (state.debugLogging) {
-        log.debug "${value}"
-    }	
+
+
+private setColor(bulb, color1, level) {
+	def hueColor = 0
+	def saturation = 100
+	switch(color1) {
+		case "White":
+			hueColor = 52
+			saturation = 19
+			break;
+		case "Daylight":
+			hueColor = 53
+			saturation = 91
+			break;
+		case "Soft White":
+			hueColor = 23
+			saturation = 56
+			break;
+		case "Warm White":
+			hueColor = 20
+			saturation = 80 //83
+			break;
+		case "Blue":
+			hueColor = 70
+			break;
+		case "Green":
+			hueColor = 35
+			break;
+		case "Yellow":
+			hueColor = 25
+			break;
+		case "Orange":
+			hueColor = 10
+			break;
+		case "Purple":
+			hueColor = 75
+			break;
+		case "Pink":
+			hueColor = 83
+			break;
+		case "Red":
+			hueColor = 100
+			break;
+	}
+      
+    if (color1 != null)
+    {
+        def newValue = [hue: hueColor, saturation: saturation, level: level]
+        logWriterChild ("New Colors = $newValue")
+        bulb.setColor(newValue)
+    }
+}
+
+
+// Debug logging
+
+private def logWriterChild(value) {	
+    parent.logWriter (value)
 }
 
 

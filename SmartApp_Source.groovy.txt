@@ -24,12 +24,12 @@ import groovy.json.JsonBuilder
  * VERSION CONTROL - Plex Plus Parent
  * ###############
  *
- *  v2.0  - Modified Christian Hjelseth's excellent Smart App to use parent & child apps
+ *  v2.0 - Modified Christian Hjelseth's excellent Smart App to use parent & child apps
  * 				- Allowing multi room matching to a single player
  * 				- Allowing flexible number of "rooms"
  * 		 - Added support for matching against Player Name or User Name or IP Address (IP address requires Jake's modified exe)
  *		 - Added support for on and off switches on the same state change.
- *		 - Added disabled switch to stop automation.
+ *		 - Added disabled switch to stop automation
  *
  */
 
