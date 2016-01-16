@@ -30,6 +30,7 @@ import groovy.json.JsonBuilder
  * 		 - Added support for matching against Player Name or User Name or IP Address (IP address requires Jake's modified exe)
  *		 - Added support for on and off switches on the same state change.
  *		 - Added disabled switch to stop automation
+ *  v2.1 - Added Europe and USA addresses in the API Info screen
  *
  */
 
@@ -115,10 +116,17 @@ def appInfoJson() {
 	def configJson = new groovy.json.JsonOutput().toJson([
     	appId:        app.id,
     	accessToken:  state.accessToken,
-    	appUrl: 	"https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}",
-    	onPlay: 	"https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onplay",
-		onPause:	"https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onpause",
-		onStop:		"https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onstop"
+    	
+	Location:"USA",
+    	onPlay: 	"https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onplay",
+		onPause:	"https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onpause",
+		onStop:		"https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onstop",
+        
+	Location2:"Europe",
+    	onPlay2: 	"https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onplay",
+		onPause2:	"https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onpause",
+		onStop2:		"https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onstop"        
+        
     ])
 
     def configString = new groovy.json.JsonOutput().prettyPrint(configJson)

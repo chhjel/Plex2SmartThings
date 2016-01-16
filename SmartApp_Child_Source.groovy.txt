@@ -27,10 +27,12 @@
  * 				- Allowing flexible number of "rooms"
  * 		 - Added support for matching against Player Name or User Name or IP Address (IP address requires Jake's modified exe)
  *		 - Added support for on and off switches on the same state change.
- *		 - Added disabled switch to stop automation.
- *	v2.1 - Removed independent debug logging from child app, now mastered from parent.
+ *		 - Added disabled switch to stop automation
+ *	v2.1 - Removed independant debug logging from child app, now mastered from parent.
  *		 - Fix bug with disable switch
  *		 - Added Hue Colors (First select Hues)
+ *  v2.2 - Changes to order of items in App
+ *		 - Added momentary switch, better for triggering scenes in other apps (doesn't trigger a second time on toggle off)
  *
  */
 
@@ -91,6 +93,9 @@ def mainPage() {
 		section("Lights (Hue Bubles have Color)") {
 			input "dimmers1", "capability.switchLevel", title: "Dimmers", multiple: true, required: false
             input "hues1", "capability.colorControl", title: "Hue Bulbs", multiple:true, required:false, submitOnChange: true
+            input(name: "iLevelOnPlay1", type: "number", title: "Dimmers > levels on Play", defaultValue:0)
+            input(name: "iLevelOnPause1", type: "number", title: "Dimmers > levels on Pause", defaultValue:30)
+            input(name: "iLevelOnStop1", type: "number", title: "Dimmers > levels on Stop", defaultValue:100)
             if(hues1) {
 				input "colorOnPlay", "enum", title: "Hue Bulbs > Color On Play", required: false, multiple: false, submitOnChange: true,
 					options: ["Soft White", "White", "Daylight", "Warm White", "Red", "Green", "Blue", "Yellow", "Orange", "Purple", "Pink"]
@@ -99,10 +104,16 @@ def mainPage() {
                 input "colorOnStop", "enum", title: "Hue Bulbs > Color On Stop", required: false, multiple: false, submitOnChange: true,
 					options: ["Soft White", "White", "Daylight", "Warm White", "Red", "Green", "Blue", "Yellow", "Orange", "Purple", "Pink"]
             }
+            input(name: "bDimOnlyIfOn1", type: "bool", title: "Dim bulbs only if they're already on")
         }
 		section("Switches") {
-            input "switches1", "capability.switch", title:"Switches Off", multiple: true, required: false
-            input "switches2", "capability.switch", title:"Switches On", multiple: true, required: false
+        	input "switches2", "capability.switch", title:"Switches On When Playing (Return to Off)", multiple: true, required: false
+            input "switches1", "capability.switch", title:"Switches Off When Playing (Return to On)", multiple: true, required: false
+            input "mSwitchPlay", "capability.switch", title:"Momentary switch on Play", multiple: true, required: false
+            input "mSwitchPause", "capability.switch", title:"Momentary switch on Pause", multiple: true, required: false
+            input "mSwitchStop", "capability.switch", title:"Momentary switch on Stop", multiple: true, required: false
+            input(name: "bSwitchOffOnPause1", type: "bool", title: "Switches use Play config when Paused")
+            
         }
 		section("Modes / Routines") {
 			input "playMode1", "mode", title: "Mode when playing", required:false
@@ -115,12 +126,7 @@ def mainPage() {
 			}
 		}
 		section("Settings") {
-			input(name: "bSwitchOffOnPause1", type: "bool", title: "Turn switches off on pause")
-			input(name: "bDimOnlyIfOn1", type: "bool", title: "Dim bulbs only if they're already on")
 			input(name: "bTreatTrailersAsPause1", type: "bool", title: "Use pause config for movie trailers")
-			input(name: "iLevelOnStop1", type: "number", title: "Bulb/dimmer levels on Stop", defaultValue:100)
-			input(name: "iLevelOnPause1", type: "number", title: "Bulb/dimmer levels on Pause", defaultValue:30)
-			input(name: "iLevelOnPlay1", type: "number", title: "Bulb/dimmer levels on Play", defaultValue:0)
             input "disabled", "capability.switch", title: "Switch to disable when ON", required: false, multiple: false
 		}
     }
@@ -165,12 +171,14 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
 		ExecRoutine(playRoutine1)
 		SetLevels(iLevelOnPlay1, colorOnPlay)
         SetSwitchesOff()
+        settings."mSwitchPlay"?.on()
     }
     else if (command == "onpause") {        
         logWriterChild ("->Paused")
         ChangeMode(pauseMode1)
 		ExecRoutine(pauseRoutine1)
     	SetLevels(iLevelOnPause1, colorOnPause)
+        settings."mSwitchPause"?.on()
         if(bSwitchOffOnPause1) {
        		SetSwitchesOff()
         } else {
@@ -183,6 +191,7 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
 		ExecRoutine(stopRoutine1)
     	SetLevels(iLevelOnStop1, colorOnStop)
         SetSwitchesOn()
+        settings."mSwitchStop"?.on()
     }
 }
 
@@ -213,6 +222,8 @@ def SetSwitchesOff() {
 	settings."switches1"?.off()
     settings."switches2"?.on()
 }
+
+
 def SetLevels(level, acolor) {
 	// If color specified set hues
     if (acolor != null && level != null) {
