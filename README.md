@@ -4,7 +4,7 @@ Note: This is a modified version of ChristianH’s Excellent Plex2SmartThings. T
 
 Integration from Plex to SmartThings, notifying a smartapp when media starts playing, pauses or stops on Plex.
 
-PlexPlus adds additionally:
+PlexPlus adds:
 - Child apps for each room to allow as many rooms / scenes as required.
 - This also allows matching multiple “rooms” from a single player for more complex lighting requirements.
 - Additional functionality from v1.4.1, including a disable switch check and momentary switches.

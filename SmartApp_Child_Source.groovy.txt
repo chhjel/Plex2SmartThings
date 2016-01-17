@@ -26,6 +26,7 @@
  *		 - Added Hue Colors (First select Hues)
  *  v2.2 - Changes to order of items in App
  *		 - Added momentary switch, better for triggering scenes in other apps (doesn't trigger a second time on toggle off)
+ *  v2.3 - Cosmetic changes including hiding dimmer settings when no dimmers selected.
  *
  */
 
@@ -84,11 +85,13 @@ def mainPage() {
             paragraph "To identify player, you can use either Player Device Name, Username or IP address. You may set the name to * in order to match any player."
         }
 		section("Lights (Hue Bubles have Color)") {
-			input "dimmers1", "capability.switchLevel", title: "Dimmers", multiple: true, required: false
+			input "dimmers1", "capability.switchLevel", title: "Dimmers", multiple: true, required: false, submitOnChange: true
             input "hues1", "capability.colorControl", title: "Hue Bulbs", multiple:true, required:false, submitOnChange: true
-            input(name: "iLevelOnPlay1", type: "number", title: "Dimmers > levels on Play", defaultValue:0)
-            input(name: "iLevelOnPause1", type: "number", title: "Dimmers > levels on Pause", defaultValue:30)
-            input(name: "iLevelOnStop1", type: "number", title: "Dimmers > levels on Stop", defaultValue:100)
+            if(hues1||dimmers1) {
+            input(name: "iLevelOnPlay1", type: "number", title: "Level on Play", defaultValue:0)
+            input(name: "iLevelOnPause1", type: "number", title: "Level on Pause", defaultValue:30)
+            input(name: "iLevelOnStop1", type: "number", title: "Level on Stop", defaultValue:100)
+            }
             if(hues1) {
 				input "colorOnPlay", "enum", title: "Hue Bulbs > Color On Play", required: false, multiple: false, submitOnChange: true,
 					options: ["Soft White", "White", "Daylight", "Warm White", "Red", "Green", "Blue", "Yellow", "Orange", "Purple", "Pink"]
@@ -100,12 +103,14 @@ def mainPage() {
             input(name: "bDimOnlyIfOn1", type: "bool", title: "Dim bulbs only if they're already on")
         }
 		section("Switches") {
-        	input "switches2", "capability.switch", title:"Switches On When Playing (Return to Off)", multiple: true, required: false
-            input "switches1", "capability.switch", title:"Switches Off When Playing (Return to On)", multiple: true, required: false
+        	input "switches2", "capability.switch", title:"Switches On when Playing", multiple: true, required: false
+            input "switches1", "capability.switch", title:"Switches Off when Playing", multiple: true, required: false
+            input(name: "bSwitchOffOnPause1", type: "bool", title: "Switches use Play config when Paused")
+            paragraph "The below switches do not toggle off when state becomes inactive, ideal for tiggering external App scenes"
             input "mSwitchPlay", "capability.switch", title:"Momentary switch on Play", multiple: true, required: false
             input "mSwitchPause", "capability.switch", title:"Momentary switch on Pause", multiple: true, required: false
             input "mSwitchStop", "capability.switch", title:"Momentary switch on Stop", multiple: true, required: false
-            input(name: "bSwitchOffOnPause1", type: "bool", title: "Switches use Play config when Paused")
+           
             
         }
 		section("Modes / Routines") {
@@ -120,7 +125,7 @@ def mainPage() {
 		}
 		section("Settings") {
 			input(name: "bTreatTrailersAsPause1", type: "bool", title: "Use pause config for movie trailers")
-            input "disabled", "capability.switch", title: "Switch to disable when ON", required: false, multiple: false
+            input "disabled", "capability.switch", title: "Switch to disable when On", required: false, multiple: false
 		}
     }
 }
