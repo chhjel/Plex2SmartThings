@@ -11,13 +11,6 @@
  *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
- *
- * INSTALL
- * ###############
- *
- *	- Install both parent and cild apps via IDE - Only publish the parent App (This App)
- *	- Enable OAuth in IDE on the parent App (This App)
- *  - Setup the Plex2SmartThings.exe (For IP matching Jake's modified exe is required)
  * 
  * VERSION CONTROL - Plex Plus Child
  * ###############
@@ -40,11 +33,11 @@
 
 definition(
     name: "Plex Plus Child",
-    namespace: "jebbett",
+    namespace: "ChristianH",
     author: "Christian Hjelseth & Jacob Tebbett",
     description: "Allows web requests to dim/turn off/on lights when plex is playing",
     category: "My Apps",
-    parent: "jebbett:Plex Plus",
+    parent: "ChristianH:Plex Plus",
     iconUrl: "http://1sd3vh2v9afo91q38219tlj1.wpengine.netdna-cdn.com/wp-content/uploads/2015/05/plex-icon-server-big-3b6e2330294017827d0354f0c768a3ab.png",
     iconX2Url: "http://1sd3vh2v9afo91q38219tlj1.wpengine.netdna-cdn.com/wp-content/uploads/2015/05/plex-icon-server-big-3b6e2330294017827d0354f0c768a3ab.png",
     iconX3Url: "http://1sd3vh2v9afo91q38219tlj1.wpengine.netdna-cdn.com/wp-content/uploads/2015/05/plex-icon-server-big-3b6e2330294017827d0354f0c768a3ab.png")

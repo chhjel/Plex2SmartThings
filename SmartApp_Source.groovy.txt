@@ -13,13 +13,6 @@ import groovy.json.JsonBuilder
  *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
- *
- * INSTALL
- * ###############
- *
- *	- Install both parent and cild apps via IDE - Only publish the parent App (This App)
- *	- Enable OAuth in IDE on the parent App (This App)
- *  - Setup the Plex2SmartThings.exe (For IP matching Jake's modified exe is required)
  * 
  * VERSION CONTROL - Plex Plus Parent
  * ###############
@@ -36,7 +29,7 @@ import groovy.json.JsonBuilder
 
 definition(
     name: "Plex Plus",
-    namespace: "jebbett",
+    namespace: "ChristianH",
     author: "Christian Hjelseth & Jake Tebbett",
     description: "Allows web requests to dim/turn off/on lights when plex is playing",
     category: "My Apps",
