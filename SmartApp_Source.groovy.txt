@@ -24,6 +24,7 @@ import groovy.json.JsonBuilder
  *		 - Added support for on and off switches on the same state change.
  *		 - Added disabled switch to stop automation
  *  v2.1 - Added Europe and USA addresses in the API Info screen
+ *  v2.2 - Added App ID and Access Token to "Live Logging", just enable logging, open App and press "Done"
  *
  */
 
@@ -60,6 +61,9 @@ def initialize() {
     if (!state.accessToken) {
     	createAccessToken()
    	}
+    
+    logWriter("APP_ID: $app.id")
+    logWriter("ACCESS_TOKEN: $state.accessToken")
 }
 
 preferences {
