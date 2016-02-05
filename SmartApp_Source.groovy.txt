@@ -25,6 +25,7 @@ import groovy.json.JsonBuilder
  *		 - Added disabled switch to stop automation
  *  v2.1 - Added Europe and USA addresses in the API Info screen
  *  v2.2 - Added App ID and Access Token to "Live Logging", just enable logging, open App and press "Done"
+ * 	v2.3 - Fixed child app bug.
  *
  */
 
@@ -74,10 +75,10 @@ def mainMenu() {
 
 	if (state.debugLogging == null) 	{ state.debugLogging = false }
 
-    dynamicPage(name: "mainMenu", title: "Rooms", install: true, uninstall: false,submitOnChange: true) {              
+    dynamicPage(name: "mainMenu", title: "Rooms", install: true, uninstall: true,submitOnChange: true) {              
        
         section {
-            app(name: "childapp", appName: "Plex Plus Child", namespace: "jebbett", title: "Create New Room", multiple: true)
+            app(name: "childapp", appName: "Plex Plus Child", namespace: "ChristianH", title: "Create New Room", multiple: true)
             }	
         
     if (!state.accessToken) {
