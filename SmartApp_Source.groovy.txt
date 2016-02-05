@@ -26,6 +26,7 @@ import groovy.json.JsonBuilder
  *  v2.1 - Added Europe and USA addresses in the API Info screen
  *  v2.2 - Added App ID and Access Token to "Live Logging", just enable logging, open App and press "Done"
  * 	v2.3 - Fixed child app bug.
+ *	v2.4 - Updated API Information to return US or EU.
  *
  */
 
@@ -85,8 +86,11 @@ def mainMenu() {
     	createAccessToken()
    	}
     	section(title: "API Information") { 
-        	href url: "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/appinfo?access_token=${state.accessToken}", 
-            		style:"embedded", required:false, title:"API Information", description: "Tap to view Info"
+        	href url: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/appinfo?access_token=${state.accessToken}",
+            		style:"embedded", required:false, title:"API Information US", description: "Tap to view Info"
+    	
+        	href url: "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/appinfo2?access_token=${state.accessToken}", 
+            		style:"embedded", required:false, title:"API Information EU", description: "Tap to view Info"
     	}
         
         // Enables logging debug only when enabled
@@ -115,15 +119,24 @@ def appInfoJson() {
     	appId:        app.id,
     	accessToken:  state.accessToken,
     	
-	Location:"USA",
     	onPlay: 	"https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onplay",
 		onPause:	"https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onpause",
 		onStop:		"https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onstop",
         
-	Location2:"Europe",
-    	onPlay2: 	"https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onplay",
-		onPause2:	"https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onpause",
-		onStop2:		"https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onstop"        
+    ])
+
+    def configString = new groovy.json.JsonOutput().prettyPrint(configJson)
+    render contentType: "text/plain", data: configString
+}
+
+def appInfoJson2() {
+	def configJson = new groovy.json.JsonOutput().toJson([
+    	appId:        app.id,
+    	accessToken:  state.accessToken,
+
+    	onPlay: 	"https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onplay",
+		onPause:	"https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onpause",
+		onStop:		"https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onstop"        
         
     ])
 
@@ -134,6 +147,7 @@ def appInfoJson() {
 mappings {
   path("/statechanged/:command") 	{ action: [ GET: "OnCommandRecieved" ] }
   path("/appinfo") 					{ action: [ GET: "appInfoJson"]   }
+  path("/appinfo2") 					{ action: [ GET: "appInfoJson2"]   }
 }
 
 private def logWriter(value) {
