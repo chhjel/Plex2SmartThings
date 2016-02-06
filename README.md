@@ -14,7 +14,7 @@
 
 ## Requirements
 
-- Windows Computer - A computer will need to run a program to poll Plex, so will need to be switched on when you are using Plex for this to work (This does not need to be on the same computer as the plex server)
+- Windows Computer - A computer will need to run a program to poll Plex, so will need to be switched on when you are using Plex for this to work (This does not need to be on the same computer as the Plex server)
 - [SmartThings](http://www.smartthings.com/) home automation system.
 - [Plex Media Server](https://plex.tv/)
 
@@ -73,6 +73,6 @@ If anything isn’t working you can try enabling some extra debug output by addi
 
 ### 4. Configure the Smart App
 
-Configurration should be self explanatory, however if you require device details then the App has a section call "Last Event".
+Configuration should be self explanatory, however if you require device details then the App has a section call "Last Event".
 
-If you start a video on your devicce you want to setup the device details will be shown here to make configuration in to the App easier, if the event is not appearing here then the config.config is not setup correctly and you will need to revisit step 2.
+If you start a video on your device you want to setup the device details will be shown here to make configuration in to the App easier, if the event is not appearing here then the config.config is not setup correctly and you will need to revisit step 2.
