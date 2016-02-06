@@ -181,18 +181,17 @@ def OnCommandRecieved() {
 	def playerName = params.player
     def playerIP = params.ipadd
 	def mediaType = params.type
-    state.lastEvent = " User Name: $userName \n Player Name: $playerName \n IP Address: $playerIP \n Command: $command \n Media Type: $mediaType"
-	logWriter ("Plex.$command($userName, $playerName, $playerIP, $mediaType)")
 
-// If Plex2SmartThings.exe has not been modified to return IP Address (ipadd) then return No IP to stop false triggering.
-
+	// If Plex2SmartThings.exe has not been modified to return IP Address (ipadd) then return No IP to stop false triggering.
     if (playerIP == null) {
         playerIP = "No IP Returned"
     }
+
+	state.lastEvent = " User Name: $userName \n Player Name: $playerName \n IP Address: $playerIP \n Command: $command \n Media Type: $mediaType"
+	logWriter ("Plex.$command($userName, $playerName, $playerIP, $mediaType)")
     
 	childApps.each { child ->
     	child.AppCommandRecieved(command, userName, playerName, playerIP, mediaType)
     }
 	return
-
 }
