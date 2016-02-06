@@ -2,7 +2,7 @@
 
 **Using a Windows EXE to translate status changes in Plex Media Server and passing these status changes to a SmartThings App to control lighting and switches. Different statuses include Play, Pause, Stop & Trailer**
 
-**Note:** This is a modified version of ChristianH’s Excellent Plex2SmartThings. This has been re-named to PlexPlus as a fork From the "Plex + SmartThings" thread and to allow trialing this app alongside the original, however please note that this is functionally based on the hard work of Christian and the updates made in this version are just additional functionality as described below.
+**Note:** This is a modified version of @ChristianH’s Excellent Plex2SmartThings. This has been re-named to PlexPlus as a fork from his script and the name taken from the "Plex + SmartThings" thread that started it all, however please note that this is functionally based on the hard work of Christian and the updates made in this version are just additional functionality as described below.
 
 **Code and Program Location:**
 https://github.com/jebbett/Plex2SmartThings/tree/PlexPlus
