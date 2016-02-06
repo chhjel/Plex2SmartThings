@@ -27,6 +27,7 @@ import groovy.json.JsonBuilder
  *  v2.2 - Added App ID and Access Token to "Live Logging", just enable logging, open App and press "Done"
  * 	v2.3 - Fixed child app bug.
  *	v2.4 - Updated API Information to return US or EU.
+ *	v2.5 - Added "Last Event" in app to make setting up players easier.
  *
  */
 
@@ -66,10 +67,13 @@ def initialize() {
     
     logWriter("APP_ID: $app.id")
     logWriter("ACCESS_TOKEN: $state.accessToken")
+    
+    if(state.lastEvent == null){state.lastEvent = "No event recieved, please ensure that config.config is setup correctly"}
 }
 
 preferences {
 	page(name: "mainMenu")
+    page(name: "lastEvt")
 }
 
 def mainMenu() {
@@ -93,6 +97,10 @@ def mainMenu() {
             		style:"embedded", required:false, title:"API Information EU", description: "Tap to view Info"
     	}
         
+        section(title: "Last Event Recieved") { 
+        	href(name: "usersBal", title: "Last Event", required: false, page: "lastEvt", description: "view last event recieved by app")
+    	}
+        
         // Enables logging debug only when enabled
         section(title: "Debug Logging") {
        		paragraph "If you experiencing issues please enable logging to help troubleshoot"
@@ -112,6 +120,16 @@ def mainMenu() {
         
     }
 }
+
+def lastEvt() {
+
+    dynamicPage(name: "lastEvt", title: "Last Event", install: false, uninstall: false) {
+    	section(title: "Details of Last Event Recieved") {
+        	paragraph "$state.lastEvent"
+        }
+    }
+}
+
 
 // These Methods Generate Json for you Info Only
 def appInfoJson() {
@@ -163,7 +181,7 @@ def OnCommandRecieved() {
 	def playerName = params.player
     def playerIP = params.ipadd
 	def mediaType = params.type
-    
+    state.lastEvent = " User Name: $userName \n Player Name: $playerName \n IP Address: $playerIP \n Command: $command \n Media Type: $mediaType"
 	logWriter ("Plex.$command($userName, $playerName, $playerIP, $mediaType)")
 
 // If Plex2SmartThings.exe has not been modified to return IP Address (ipadd) then return No IP to stop false triggering.
