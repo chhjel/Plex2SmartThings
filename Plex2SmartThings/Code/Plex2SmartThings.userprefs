@@ -1,0 +1,15 @@
+﻿<Properties StartupItem="Plex2SmartThings\Plex2SmartThings.csproj">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Plex2SmartThings\Program.cs">
+    <Files>
+      <File FileName="Plex2SmartThings\Program.cs" Line="19" Column="37" />
+      <File FileName="Plex2SmartThings\Config.cs" Line="1" Column="1" />
+      <File FileName="Plex2SmartThings\config.config" Line="1" Column="1" />
+      <File FileName="Plex2SmartThings\UserStateManager.cs" Line="133" Column="27" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>
