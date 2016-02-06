@@ -14,7 +14,7 @@
 
 ## Requirements
 
-- [Windows Computer] A computer will need to run a program to poll Plex, so will need to be switched on when you are using Plex for this to work (This does not need to be on the same computer as the plex server)
+- Windows Computer - A computer will need to run a program to poll Plex, so will need to be switched on when you are using Plex for this to work (This does not need to be on the same computer as the plex server)
 - [SmartThings](http://www.smartthings.com/) home automation system.
 - [Plex Media Server](https://plex.tv/)
 
