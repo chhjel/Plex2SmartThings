@@ -27,6 +27,7 @@
  *  v2.2 - Changes to order of items in App
  *		 - Added momentary switch, better for triggering scenes in other apps (doesn't trigger a second time on toggle off)
  *  v2.3 - Cosmetic changes including hiding dimmer settings when no dimmers selected.
+ *  v2.4 - Added the ability to return switches to the state before Plex started playing.
  *
  */
 
@@ -60,7 +61,7 @@ def updated() {
 }
 
 def initialize() {
-
+	state.catcherRunning = false
 }
 
 // Main page to select room settings
@@ -105,6 +106,7 @@ def mainPage() {
 		section("Switches") {
         	input "switches2", "capability.switch", title:"Switches On when Playing", multiple: true, required: false
             input "switches1", "capability.switch", title:"Switches Off when Playing", multiple: true, required: false
+            input(name: "bReturnState1", type: "bool", title: "Switches return to original state when Stopped")
             input(name: "bSwitchOffOnPause1", type: "bool", title: "Switches use Play config when Paused")
             paragraph "The below switches do not toggle off when state becomes inactive, ideal for tiggering external App scenes"
             input "mSwitchPlay", "capability.switch", title:"Momentary switch on Play", multiple: true, required: false
@@ -165,6 +167,11 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
 
     if (command == "onplay") {
     	logWriterChild ("->Playing")
+        if(!state.catcherRunning){
+        	catchState("switches1")
+    		catchState("switches2")
+            state.catcherRunning = true
+        }
         ChangeMode(playMode1)
 		ExecRoutine(playRoutine1)
 		SetLevels(iLevelOnPlay1, colorOnPlay)
@@ -181,6 +188,8 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
        		SetSwitchesOff()
         } else {
         	SetSwitchesOn()
+            returnToState("switches1")
+    		returnToState("switches2")
         }
     }
     else if (command == "onstop") {
@@ -188,8 +197,15 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
         ChangeMode(stopMode1)
 		ExecRoutine(stopRoutine1)
     	SetLevels(iLevelOnStop1, colorOnStop)
-        SetSwitchesOn()
         settings."mSwitchStop"?.on()
+        if(state.catcherRunning && bReturnState1){
+        	returnToState("switches1")
+    		returnToState("switches2")
+            state.catcherRunning = false
+        }else{
+        	SetSwitchesOn()
+            state.catcherRunning = false
+        }
     }
 }
 
@@ -211,6 +227,7 @@ def ChangeMode(newMode) {
 }
 
 def SetSwitchesOn() {
+	
 	logWriterChild ("SetSwitches")
 	settings."switches1"?.on()
     settings."switches2"?.off()
@@ -243,6 +260,32 @@ private def dimIfOn(bulb, level) {
 		bulb.setLevel(level)
 	}
 }
+
+//Save state
+private catchState(switches) {
+        settings."${switches}"?.each { switcher -> state."${switcher.id}State" = switcher.currentValue("switch")
+        	logWriterChild (switcher.currentValue("switch"))
+        }
+}
+//Return to state
+private returnToState(switches) {
+        settings."${switches}"?.each {
+        	switcher -> 
+            if(state."${switcher.id}State" == "on") {
+            	switcher.on()
+                logWriterChild ("Return On")
+            }
+            
+            if(state."${switcher.id}State" == "off") {
+            	switcher.off()
+                logWriterChild ("Return Off")
+            }
+                 
+        }
+}
+
+
+
 
 
 private setColor(bulb, color1, level) {
