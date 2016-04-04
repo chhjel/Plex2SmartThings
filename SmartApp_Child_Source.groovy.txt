@@ -28,7 +28,7 @@
  *		 - Added momentary switch, better for triggering scenes in other apps (doesn't trigger a second time on toggle off)
  *  v2.3 - Cosmetic changes including hiding dimmer settings when no dimmers selected.
  *  v2.4 - Added the ability to return switches to the state before Plex started playing.
- *
+ *  v2.5 - Updated icon path
  */
 
 
@@ -40,9 +40,9 @@ definition(
     description: "Allows web requests to dim/turn off/on lights when plex is playing",
     category: "My Apps",
     parent: "ChristianH:Plex Plus",
-    iconUrl: "http://1sd3vh2v9afo91q38219tlj1.wpengine.netdna-cdn.com/wp-content/uploads/2015/05/plex-icon-server-big-3b6e2330294017827d0354f0c768a3ab.png",
-    iconX2Url: "http://1sd3vh2v9afo91q38219tlj1.wpengine.netdna-cdn.com/wp-content/uploads/2015/05/plex-icon-server-big-3b6e2330294017827d0354f0c768a3ab.png",
-    iconX3Url: "http://1sd3vh2v9afo91q38219tlj1.wpengine.netdna-cdn.com/wp-content/uploads/2015/05/plex-icon-server-big-3b6e2330294017827d0354f0c768a3ab.png")
+    iconUrl: "https://raw.githubusercontent.com/jebbett/Plex2SmartThings/PlexPlus/icon.png",
+    iconX2Url: "https://raw.githubusercontent.com/jebbett/Plex2SmartThings/PlexPlus/icon.png",
+    iconX3Url: "https://raw.githubusercontent.com/jebbett/Plex2SmartThings/PlexPlus/icon.png")
 
 
 preferences {

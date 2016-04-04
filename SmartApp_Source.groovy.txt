@@ -28,6 +28,7 @@ import groovy.json.JsonBuilder
  * 	v2.3 - Fixed child app bug.
  *	v2.4 - Updated API Information to return US or EU.
  *	v2.5 - Added "Last Event" in app to make setting up players easier.
+ *  v2.6 - Amended error in US API Info and updated icon path.
  *
  */
 
@@ -37,9 +38,9 @@ definition(
     author: "Christian Hjelseth & Jake Tebbett",
     description: "Allows web requests to dim/turn off/on lights when plex is playing",
     category: "My Apps",
-    iconUrl: "http://1sd3vh2v9afo91q38219tlj1.wpengine.netdna-cdn.com/wp-content/uploads/2015/05/plex-icon-server-big-3b6e2330294017827d0354f0c768a3ab.png",
-    iconX2Url: "http://1sd3vh2v9afo91q38219tlj1.wpengine.netdna-cdn.com/wp-content/uploads/2015/05/plex-icon-server-big-3b6e2330294017827d0354f0c768a3ab.png",
-    iconX3Url: "http://1sd3vh2v9afo91q38219tlj1.wpengine.netdna-cdn.com/wp-content/uploads/2015/05/plex-icon-server-big-3b6e2330294017827d0354f0c768a3ab.png",
+    iconUrl: "https://raw.githubusercontent.com/jebbett/Plex2SmartThings/PlexPlus/icon.png",
+    iconX2Url: "https://raw.githubusercontent.com/jebbett/Plex2SmartThings/PlexPlus/icon.png",
+    iconX3Url: "https://raw.githubusercontent.com/jebbett/Plex2SmartThings/PlexPlus/icon.png",
     oauth: [displayName: "PlexServer", displayLink: ""])
 
 
@@ -139,7 +140,7 @@ def appInfoJson() {
     	
     	onPlay: 	"https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onplay",
 		onPause:	"https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onpause",
-		onStop:		"https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onstop",
+		onStop:		"https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onstop"
         
     ])
 
@@ -165,7 +166,7 @@ def appInfoJson2() {
 mappings {
   path("/statechanged/:command") 	{ action: [ GET: "OnCommandRecieved" ] }
   path("/appinfo") 					{ action: [ GET: "appInfoJson"]   }
-  path("/appinfo2") 					{ action: [ GET: "appInfoJson2"]   }
+  path("/appinfo2") 				{ action: [ GET: "appInfoJson2"]   }
 }
 
 private def logWriter(value) {
