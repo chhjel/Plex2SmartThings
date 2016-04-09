@@ -42,8 +42,9 @@ iii. Enable OAuth in IDE by going in to IDE > My Smart Apps > Plex Plus > App Se
 
 iv. Get the Token and API Endpoint values via one of the below methods:
 
-* Enable debugging open the app and press done and values will be returned in Live Logging in IDE.
-* Open the SmartThings app and click API Information.
+* Open the PlexPlus smart app and click API Information for your region, you can then send it to your computer via email from the app.
+* Enable debugging, open live logging in IDE and then open the app again and press done and values will be returned in Live Logging.
+* If the above does not work (usually as ST have introduced a new region) then you can just get the App ID and Token from the "Last Event / App ID / Token" screen, but you will manually need to write this down. 
 * Configure the app online and note down the API Token and API Endpoint values.
 
 #### Child App:
@@ -59,13 +60,15 @@ A. Download Plex2SmartThingsV2.exe, config.config and if you like the debug laun
 
 B. Open the config.config file.
 
-C. In config/smartThingsEndpoints fill in your API token and endpoint urls from step B. Be sure to keep the /statechanged/on* at the end of the urls.
+C. In config/smartThingsEndpoints fill in your API token and add the APP ID to the endpoint urls from the previous section. Be sure to keep the /statechanged/on* at the end of the urls.
+
+D. Be sure to also check that your IDE URL matches the URL in config.config, if you have the URL from the app then this should be correct, if you were unable to get this from the app then you willl need to copy from IDE, it'll be somethign like "graph-na02-useast1.api.smartthings.com"
   
-D. If Plex and this application is not running on the same server then enter the URL to the session status page of your Plex server in the config/plexCheck/@plexStatusUrl attribute.
+E. If Plex and this application is not running on the same server then enter the URL to the session status page of your Plex server in the config/plexCheck/@plexStatusUrl attribute.
 
-E. If you have Plex Pass users with PINs be sure to append your plex_token to the end of the url in the step above. (e.g. http://localhost:32400/status/sessions?X-Plex-Token='MyPlexToken'). To find your plex token follow [this guide.](https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token)
+F. If you have Plex Pass users with PINs be sure to append your plex_token to the end of the url in the step above. (e.g. http://localhost:32400/status/sessions?X-Plex-Token='MyPlexToken'). To find your plex token follow [this guide.](https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token)
 
-F. Configure the rest of the file to your likings.
+G. Configure the rest of the file to your likings.
 
 ### 3. Run Plex2SmartThings
 
@@ -79,3 +82,19 @@ If anything isn’t working you can try enabling some extra debug output by addi
 Configuration should be self explanatory, however if you require device details then the App has a section call "Last Event".
 
 If you start a video on your device you want to setup the device details will be shown here to make configuration in to the App easier, if the event is not appearing here then the config.config is not setup correctly and you will need to revisit step 2.
+
+
+
+### 5. Errors / Debugging
+
+**Plex2SmartThings.exe - SendGetRequest: the remote server returned and error: (403) Forbidden**
+There is an issue with the URL in config.config re-check section 2.D
+
+**No error in the EXE and no "Last Event" present in the App**
+This is because SmartThings is not reciving an event, this is usually because the App ID or Token are incorrect, if you re-install the app these values will change and need to be setup again.
+
+**"Last Event" in the app, but hasn't triggered the lights to change.**
+This is likely to that the "Room" is not configured correctly, re-check the name or IP you have setup
+
+**Live Logging - java.lang.NullPointerException: Cannot get property 'authorities' on null object @ line xx **
+You have not enabled OAuth in the parent app, go to Secton 1.B.iii 

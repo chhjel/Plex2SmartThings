@@ -28,7 +28,8 @@ import groovy.json.JsonBuilder
  * 	v2.3 - Fixed child app bug.
  *	v2.4 - Updated API Information to return US or EU.
  *	v2.5 - Added "Last Event" in app to make setting up players easier.
- *  v2.6 - Amended error in US API Info and updated icon path.
+ *  v2.6 - Updated icon path.
+ *  v2.7 - Added USA West API Info due to new data center and also added App ID and Token independently in case new servers are introduced in the future.
  *
  */
 
@@ -90,16 +91,19 @@ def mainMenu() {
     if (!state.accessToken) {
     	createAccessToken()
    	}
-    	section(title: "API Information") { 
-        	href url: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/appinfo?access_token=${state.accessToken}",
-            		style:"embedded", required:false, title:"API Information US", description: "Tap to view Info"
-    	
-        	href url: "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/appinfo2?access_token=${state.accessToken}", 
-            		style:"embedded", required:false, title:"API Information EU", description: "Tap to view Info"
+    	section(title: "Last Event / App ID / Access Token") { 
+        	href(name: "usersBal", title: "Last Event / App ID / Access Token", required: false, page: "lastEvt", description: "view last event recieved by app")
     	}
         
-        section(title: "Last Event Recieved") { 
-        	href(name: "usersBal", title: "Last Event", required: false, page: "lastEvt", description: "view last event recieved by app")
+        section(title: "API Information") { 
+        	href url: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/appinfo?access_token=${state.accessToken}",
+            		style:"embedded", required:false, title:"API Info US Standard", description: "Tap to view Info"
+            
+            href url: "https://graph-na02-useast1.api.smartthings.com/api/smartapps/installations/${app.id}/appinfo3?access_token=${state.accessToken}",
+            		style:"embedded", required:false, title:"API Info US East", description: "Tap to view Info"
+    	
+        	href url: "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/appinfo2?access_token=${state.accessToken}", 
+            		style:"embedded", required:false, title:"API Info Europe", description: "Tap to view Info"
     	}
         
         // Enables logging debug only when enabled
@@ -125,7 +129,15 @@ def mainMenu() {
 def lastEvt() {
 
     dynamicPage(name: "lastEvt", title: "Last Event", install: false, uninstall: false) {
-    	section(title: "Details of Last Event Recieved") {
+    	section(title: "App ID") {
+        	paragraph "$app.id"
+        }
+        
+        section(title: "Access Token") {
+        	paragraph "$state.accessToken"
+        }
+        
+        section(title: "Details of Last Event Recieved") {
         	paragraph "$state.lastEvent"
         }
     }
@@ -163,10 +175,26 @@ def appInfoJson2() {
     render contentType: "text/plain", data: configString
 }
 
+def appInfoJson3() {
+	def configJson = new groovy.json.JsonOutput().toJson([
+    	appId:        app.id,
+    	accessToken:  state.accessToken,
+
+    	onPlay: 	"https://graph-na02-useast1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onplay",
+		onPause:	"https://graph-na02-useast1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onpause",
+		onStop:		"https://graph-na02-useast1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onstop"        
+        
+    ])
+
+    def configString = new groovy.json.JsonOutput().prettyPrint(configJson)
+    render contentType: "text/plain", data: configString
+}
+
 mappings {
   path("/statechanged/:command") 	{ action: [ GET: "OnCommandRecieved" ] }
   path("/appinfo") 					{ action: [ GET: "appInfoJson"]   }
   path("/appinfo2") 				{ action: [ GET: "appInfoJson2"]   }
+  path("/appinfo3") 				{ action: [ GET: "appInfoJson3"]   }
 }
 
 private def logWriter(value) {
