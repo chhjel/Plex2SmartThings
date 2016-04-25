@@ -56,7 +56,7 @@ iv. Get the Token and API Endpoint values via one of the below methods:
 
 ### 2. Configure the Plex2SmartThings Windows application
 
-A. Download Plex2SmartThingsV2.exe, config.config and if you like the debug launchers.
+A. Download Plex2SmartThingsV2.exe, config.config and if you like the debug launchers. (I have also put a ZIP file containing all of these in the same folder)
 
 B. Open the config.config file.
 
@@ -68,13 +68,13 @@ E. If Plex and this application is not running on the same server then enter the
 
 F. If you have Plex Pass users with PINs be sure to append your plex_token to the end of the url in the step above. (e.g. http://localhost:32400/status/sessions?X-Plex-Token='MyPlexToken'). To find your plex token follow [this guide.](https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token)
 
-G. Configure the rest of the file to your likings.
+G. The polling interval can also be configured, however the standard value should suffice.
 
 ### 3. Run Plex2SmartThings
 
 You can now run Plex2SmartThings and the SmartApp should be notified whenever any media plays on plex.
 
-If anything isn’t working you can try enabling some extra debug output by adding the d1 or d2 arguments. E.g. running Plex2SmartThingsV2.exe d1 from the command line or running the launchers.
+If anything isn’t working you can try enabling some extra debug output by adding the d1 or d2 arguments. E.g. running Plex2SmartThingsV2.exe d1 from the command line or running the supplied launchers.
 
 
 ### 4. Configure the Smart App

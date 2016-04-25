@@ -1,1 +1,1 @@
-Plex2SmartThings.exe d2
+Plex2SmartThingsV2.exe d2
