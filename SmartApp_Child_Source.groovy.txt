@@ -29,6 +29,7 @@
  *  v2.3 - Cosmetic changes including hiding dimmer settings when no dimmers selected.
  *  v2.4 - Added the ability to return switches to the state before Plex started playing.
  *  v2.5 - Updated icon path
+ *  v2.6 - Added MusicPlayer device handler support for Plex HT SmartApp support, fixed some bugs, made code more efficient.
  */
 
 
@@ -62,6 +63,7 @@ def updated() {
 
 def initialize() {
 	state.catcherRunning = false
+    subscribe(playerDT, "status", PlayerDTCommandRecieved)
 }
 
 // Main page to select room settings
@@ -83,9 +85,10 @@ def mainPage() {
 		section("Players") {
             input(name: "playerA1", type: "text", title: "Player name, User or IP", required:false)
             input(name: "playerB1", type: "text", title: "Player name, User or IP (alternative)", required:false)
-            paragraph "To identify player, you can use either Player Device Name, Username or IP address. You may set the name to * in order to match any player."
+            input(name: "playerDT", type: "capability.musicPlayer", title: "ST Media Player Device", multiple: false, required:false)
+            paragraph "To identify player, you can use either Player Device Name, Username, IP address or * in order to match any player where using the Plex2SmartThings program on your computer or you can use a supported media player device type."
         }
-		section("Lights (Hue Bubles have Color)") {
+		section("Lights (Hue bulbs have color)") {
 			input "dimmers1", "capability.switchLevel", title: "Dimmers", multiple: true, required: false, submitOnChange: true
             input "hues1", "capability.colorControl", title: "Hue Bulbs", multiple:true, required:false, submitOnChange: true
             if(hues1||dimmers1) {
@@ -132,35 +135,36 @@ def mainPage() {
     }
 }
 
+// Recieve command from MusicPlayer device type
+
+def PlayerDTCommandRecieved(evt){
+
+	if(evt.value=="playing"){AppCommandRecieved("onplay", "Unknown", playerDT,"ST Media Player Device", "movie")}
+	else if(evt.value=="stopped"){AppCommandRecieved("onstop", "Unknown", playerDT,"ST Media Player Device", "movie")}
+    else if(evt.value=="paused"){AppCommandRecieved("onpause", "Unknown", playerDT,"ST Media Player Device", "movie")}
+    
+}
+
 
 // Recieve command from parent app
 
 def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
 
+//Log last event
+	parent.StoreLastEvent(command, userName, playerName, playerIP, mediaType)
+
 //Check if room found
-	def roomFound = findAMatch(playerName, playerIP, userName);
-	if(roomFound == -1) {
-		logWriterChild ("->Not matching any rooms [$userName @ $playerName - $playerIP ]")
-        return
-    } else {
-		logWriterChild ("->Matched room [$userName @ $playerName - $playerIP ]")
-    }
+	def roomFound = findAMatch(playerName, playerIP, userName)
     
-    
+// Exit if no room found
+	if(roomFound == -1) {return}
+        
 // Stop running if disable switch is activated    
 
-    if (disabled != null) {
-    	if(disabled.currentSwitch == "on") {
-			logWriterChild ("->Disabled via switch")
-        	return
-        }
-    }
+    if (disabled != null) {if(disabled.currentSwitch == "on") {logWriterChild ("->Disabled via switch"); return}}
     
 //Translate play to pause if bTreatTrailersAsPause is enabled for this room
-    if(bTreatTrailersAsPause1 && mediaType == "clip" && command == "onplay") {
-    	command = "onpause"
-		logWriterChild ("->Is playing trailer, treating it as a pause.")
-    }
+    if(bTreatTrailersAsPause1 && mediaType == "clip" && command == "onplay") {command = "onpause"}
 
 
 // Play, Pause or Stop
@@ -176,20 +180,25 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
 		ExecRoutine(playRoutine1)
 		SetLevels(iLevelOnPlay1, colorOnPlay)
         SetSwitchesOff()
-        settings."mSwitchPlay"?.on()
+        mSwitchPlay?.on()
     }
     else if (command == "onpause") {        
         logWriterChild ("->Paused")
         ChangeMode(pauseMode1)
 		ExecRoutine(pauseRoutine1)
     	SetLevels(iLevelOnPause1, colorOnPause)
-        settings."mSwitchPause"?.on()
+        mSwitchPause?.on()
         if(bSwitchOffOnPause1) {
        		SetSwitchesOff()
         } else {
-        	SetSwitchesOn()
-            returnToState("switches1")
-    		returnToState("switches2")
+        	if(state.catcherRunning && bReturnState1){
+        		returnToState("switches1")
+    			returnToState("switches2")
+            	state.catcherRunning = false
+        	}else{
+        		SetSwitchesOn()
+            	state.catcherRunning = false
+        	}
         }
     }
     else if (command == "onstop") {
@@ -197,7 +206,7 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
         ChangeMode(stopMode1)
 		ExecRoutine(stopRoutine1)
     	SetLevels(iLevelOnStop1, colorOnStop)
-        settings."mSwitchStop"?.on()
+        mSwitchStop?.on()
         if(state.catcherRunning && bReturnState1){
         	returnToState("switches1")
     		returnToState("switches2")
@@ -218,47 +227,76 @@ def ExecRoutine(routine) {
 
 def ChangeMode(newMode) {
     if (newMode != null && newMode != "" && location.mode != newMode) {
-        if (location.modes?.find{it.name == newMode}) {
-            setLocationMode(newMode)
-        }  else {
-            log.warn "Tried to change to undefined mode '${newMode}'"
-        }
+        if (location.modes?.find{it.name == newMode}) {setLocationMode(newMode)}
+        else {log.warn "Tried to change to undefined mode '${newMode}'"}
     }
 }
 
 def SetSwitchesOn() {
-	
-	logWriterChild ("SetSwitches")
-	settings."switches1"?.on()
-    settings."switches2"?.off()
+	switches1?.on()
+    switches2?.off()
 }
 def SetSwitchesOff() {
-	logWriterChild ("SetSwitches")
-	settings."switches1"?.off()
-    settings."switches2"?.on()
+	switches1?.off()
+    switches2?.on()
 }
 
 
 def SetLevels(level, acolor) {
 	// If color specified set hues
-    if (acolor != null && level != null) {
-		logWriterChild ("SetColors")
-		settings."hues1"?.each { hue -> setColor(hue, acolor, level) }
+    if (acolor != null && level != null) {        
+    def hueColor = 0
+	def saturation = 100
+		switch(acolor) {
+			case "White":
+				hueColor = 52
+				saturation = 19
+				break;
+			case "Daylight":
+				hueColor = 53
+				saturation = 91
+				break;
+			case "Soft White":
+				hueColor = 23
+				saturation = 56
+				break;
+			case "Warm White":
+				hueColor = 20
+				saturation = 80 //83
+				break;
+			case "Blue":
+				hueColor = 70
+				break;
+			case "Green":
+				hueColor = 35
+				break;
+			case "Yellow":
+				hueColor = 25
+				break;
+			case "Orange":
+				hueColor = 10
+				break;
+			case "Purple":
+				hueColor = 75
+				break;
+			case "Pink":
+				hueColor = 83
+				break;
+			case "Red":
+				hueColor = 100
+				break;
+		}
+        
+        hues1?.each { hue -> if (!bDimOnlyIfOn1 || "on" == hue.currentSwitch) {hue.setColor([hue: hueColor, saturation: saturation, level: level])}}
+        dimmers1?.each { bulb -> if (!bDimOnlyIfOn1 || "on" == bulb.currentSwitch) {bulb.setLevel(level)}}
 	}
     else
     {
     	if (level != null) {
-			logWriterChild ("SetLevelsWithoutColor")
-			settings."hues1"?.each { hue -> dimIfOn(hue, level) }
-			settings."dimmers1"?.each { dimmer -> dimIfOn(dimmer, level) }
+			hues1?.each { hue -> if (!bDimOnlyIfOn1 || "on" == hue.currentSwitch) {hue.setLevel(level)}}
+			dimmers1?.each { bulb -> if (!bDimOnlyIfOn1 || "on" == bulb.currentSwitch) {bulb.setLevel(level)}}
 		}
     }
-}
-
-private def dimIfOn(bulb, level) {
-	if (!bDimOnlyIfOn1 || "on" == bulb.currentSwitch) {
-		bulb.setLevel(level)
-	}
 }
 
 //Save state
@@ -269,76 +307,11 @@ private catchState(switches) {
 }
 //Return to state
 private returnToState(switches) {
-        settings."${switches}"?.each {
-        	switcher -> 
-            if(state."${switcher.id}State" == "on") {
-            	switcher.on()
-                logWriterChild ("Return On")
-            }
-            
-            if(state."${switcher.id}State" == "off") {
-            	switcher.off()
-                logWriterChild ("Return Off")
-            }
-                 
-        }
-}
-
-
-
-
-
-private setColor(bulb, color1, level) {
-	def hueColor = 0
-	def saturation = 100
-	switch(color1) {
-		case "White":
-			hueColor = 52
-			saturation = 19
-			break;
-		case "Daylight":
-			hueColor = 53
-			saturation = 91
-			break;
-		case "Soft White":
-			hueColor = 23
-			saturation = 56
-			break;
-		case "Warm White":
-			hueColor = 20
-			saturation = 80 //83
-			break;
-		case "Blue":
-			hueColor = 70
-			break;
-		case "Green":
-			hueColor = 35
-			break;
-		case "Yellow":
-			hueColor = 25
-			break;
-		case "Orange":
-			hueColor = 10
-			break;
-		case "Purple":
-			hueColor = 75
-			break;
-		case "Pink":
-			hueColor = 83
-			break;
-		case "Red":
-			hueColor = 100
-			break;
-	}
-      
-    if (color1 != null)
-    {
-        def newValue = [hue: hueColor, saturation: saturation, level: level]
-        logWriterChild ("New Colors = $newValue")
-        bulb.setColor(newValue)
+	settings."${switches}"?.each {switcher -> 
+    	if(state."${switcher.id}State" == "on") {switcher.on()}
+        if(state."${switcher.id}State" == "off") {switcher.off()}
     }
 }
-
 
 // Debug logging
 
@@ -349,6 +322,6 @@ private def logWriterChild(value) {
 
 //Is the player, IP or user found
 def findAMatch(player, IP, user) {
-    if(playerA1 == "*" || playerB1 == "*" || playerA1 == player || playerB1 == player || playerA1 == IP || playerB1 == IP || playerA1 == user || playerB1 == user) return 1;
+    if(playerA1 == "*" || playerB1 == "*" || playerA1 == player || playerB1 == player || playerA1 == IP || playerB1 == IP || playerA1 == user || playerB1 == user || IP == "ST Media Player Device") return 1;
     else return -1;
 }

@@ -30,6 +30,7 @@ import groovy.json.JsonBuilder
  *	v2.5 - Added "Last Event" in app to make setting up players easier.
  *  v2.6 - Updated icon path.
  *  v2.7 - Added USA West API Info due to new data center and also added App ID and Token independently in case new servers are introduced in the future.
+ *  v2.8 - Added MusicPlayer device handler support for Plex HT SmartApp support
  *
  */
 
@@ -76,24 +77,92 @@ def initialize() {
 preferences {
 	page(name: "mainMenu")
     page(name: "lastEvt")
+    page(name: "P2ST")
+    page(name: "instructions")
 }
 
 def mainMenu() {
 
 	if (state.debugLogging == null) 	{ state.debugLogging = false }
 
-    dynamicPage(name: "mainMenu", title: "Rooms", install: true, uninstall: true,submitOnChange: true) {              
+    dynamicPage(name: "mainMenu", title: "Rooms", install: true, uninstall: true, submitOnChange: true) {              
        
         section {
             app(name: "childapp", appName: "Plex Plus Child", namespace: "ChristianH", title: "Create New Room", multiple: true)
             }	
         
+        section(title: "Instructions") { 
+        	href(name: "instructions", title: "Instructions", required: false, page: "instructions", description: "how to link this app to Plex!")
+    	}
+        
     if (!state.accessToken) {
     	createAccessToken()
    	}
-    	section(title: "Last Event / App ID / Access Token") { 
-        	href(name: "usersBal", title: "Last Event / App ID / Access Token", required: false, page: "lastEvt", description: "view last event recieved by app")
+    	
+        section(title: "Last Event") { 
+        	href(name: "usersBal", title: "Last Event", required: false, page: "lastEvt", description: "view last event recieved by app")
     	}
+        section(title: "Plex2SmartThings Setup Details") { 
+        	href(name: "P2STd", title: "Plex2SmartThings Setup Details", required: false, page: "P2ST", description: "information for setting up the Plex2SmartThings program if used")
+    	}
+        
+        
+        
+        // Enables logging debug only when enabled
+        section(title: "Debug Logging") {
+       		paragraph "If you experiencing issues please enable logging to help troubleshoot"
+            input "debugLogging", "bool", title: "Debug Logging...", required: false, defaultValue: false, refreshAfterSelection: true
+            	
+            if (debugLogging) { 
+            	state.debugLogging = true 
+                logWriter("Debug Logging has been ${state.debugLogging.toString().toUpperCase()}")
+            }
+            else { 
+            	state.debugLogging = false 
+            	logWriter("Debug Logging has been ${state.debugLogging.toString().toUpperCase()}")    
+            }
+    	}
+        
+        
+    }
+}
+
+def instructions() {
+
+    dynamicPage(name: "instructions", title: "Instructions", install: false, uninstall: false) {        
+        section(title: "Choose a method of linking to Plex") {
+        	paragraph "There are currently two methods of linking Plex to SmartThings"
+        }
+        
+        section(title: "1. Plex2SmartThings program on your Plex server")
+        section(title: "This is the preferred method if your Plex server runs on a windows computer, as most of the work is done by a program that runs on the server and avoids reliance of ST to constantly monitor your plex server, however does require some minor technical ability. This is using the windows application created by ChristianH and modified by EntityXenon"){
+        }
+        section(title: "2. Custom Device Type for Plex")
+        section(title: "This is the only method if your Plex server is not running on a windows computer as works with all variants of Plex Server, but does rely on SmartThings checking the Plex status every 10 seconds. This is using the Device Handler and smart app created by iBeech."){
+        }
+   }
+        
+}
+
+def lastEvt() {
+
+    dynamicPage(name: "lastEvt", title: "Last Event", install: false, uninstall: false) {        
+        section(title: "Details of Last Event Recieved") {
+        	paragraph "$state.lastEvent"
+        }
+    }
+}
+
+def P2ST() {
+
+    dynamicPage(name: "P2ST", title: "Plex2SmartThings Information", install: false, uninstall: false) {
+    	section(title: "App ID") {
+        	paragraph "$app.id"
+        }
+        
+        section(title: "Access Token") {
+        	paragraph "$state.accessToken"
+        }
         
         section(title: "API Information") { 
         	href url: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/appinfo?access_token=${state.accessToken}",
@@ -106,40 +175,6 @@ def mainMenu() {
             		style:"embedded", required:false, title:"API Info Europe", description: "Tap to view Info"
     	}
         
-        // Enables logging debug only when enabled
-        section(title: "Debug Logging") {
-       		paragraph "If you experiencing issues please enable logging to help troubleshoot"
-            input "debugLogging", "bool", title: "Debug Logging...", required: false, defaultValue: false, refreshAfterSelection: true
-            	
-            if (debugLogging) { 
-            	state.debugLogging = true 
-                logWriter("Debug Logging has been ${state.debugLogging.toString().toUpperCase()}")
-                paragraph "Debug Logging is Enabled: ${state.debugLogging}"
-            }
-            else { 
-            	state.debugLogging = false 
-            	logWriter("Debug Logging has been ${state.debugLogging.toString().toUpperCase()}")    
-            }
-    	}
-        
-        
-    }
-}
-
-def lastEvt() {
-
-    dynamicPage(name: "lastEvt", title: "Last Event", install: false, uninstall: false) {
-    	section(title: "App ID") {
-        	paragraph "$app.id"
-        }
-        
-        section(title: "Access Token") {
-        	paragraph "$state.accessToken"
-        }
-        
-        section(title: "Details of Last Event Recieved") {
-        	paragraph "$state.lastEvent"
-        }
     }
 }
 
@@ -215,12 +250,15 @@ def OnCommandRecieved() {
     if (playerIP == null) {
         playerIP = "No IP Returned"
     }
-
-	state.lastEvent = " User Name: $userName \n Player Name: $playerName \n IP Address: $playerIP \n Command: $command \n Media Type: $mediaType"
-	logWriter ("Plex.$command($userName, $playerName, $playerIP, $mediaType)")
     
 	childApps.each { child ->
     	child.AppCommandRecieved(command, userName, playerName, playerIP, mediaType)
     }
+	return
+}
+
+def StoreLastEvent(command, userName, playerName, playerIP, mediaType) {
+
+	state.lastEvent = " User Name: $userName \n Player Name: $playerName \n IP Address: $playerIP \n Command: $command \n Media Type: $mediaType"
 	return
 }
