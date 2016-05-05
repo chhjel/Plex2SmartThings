@@ -1,8 +1,8 @@
 # PlexPlus (with Plex2SmartThings)
 
-**Using a Windows EXE to translate status changes in Plex Media Server and passing these status changes to a SmartThings App to control lighting and switches. Different statuses include Play, Pause, Stop & Trailer**
+**Using either a Windows EXE or a Plex custom device type to translate status changes in Plex Media Server and passing these status changes to the Plex Plus SmartThings App to control lighting and switches. Different statuses include Play, Pause, Stop & Trailer**
 
-**Note:** This is a modified version of @ChristianH’s Excellent Plex2SmartThings. This has been re-named to PlexPlus as a fork from his script and the name taken from the "Plex + SmartThings" thread that started it all, however please note that this is functionally based on the hard work of Christian and the updates made in this version are just additional functionality as described below.
+**Note:** This is a modified version of @ChristianH’s Excellent Plex2SmartThings exe. 
 
 **Code and Program Location:**
 https://github.com/jebbett/Plex2SmartThings/tree/PlexPlus
@@ -13,22 +13,23 @@ https://github.com/jebbett/Plex2SmartThings/tree/PlexPlus
 - Additional functionality from v1.4.1, including a disable switch check and momentary switches.
 - Compatibility for US and EU, and updates to make setup easier.
 - Setting up devices against IP address, rather than limited to name.
+- Support for media player device type.
 - All further changes are documented in the respective Smart Apps version history.
 
-## Requirements
+## Additional Requirements
 
-- Windows Computer - A computer will need to run a program to poll Plex, so will need to be switched on when you are using Plex for this to work (This does not need to be on the same computer as the Plex server)
-- [SmartThings](http://www.smartthings.com/) home automation system.
-- [Plex Media Server](https://plex.tv/)
+Either:
+
+**- Plex2SmartThings** - Windows Application - This is the most reliable method at the moment due to ST reliability issues and also should be able to handle any client and can select based on many variables. A computer will need to run a program to poll Plex, so will need to be switched on when you are using Plex for this to work (This does not need to be on the same computer as the Plex server)
+**- Plex HT Manager** - Non Windows / NAS etc. - This is an app and custom device type, which uses ST to poll Plex every 10 seconds, as such is subject to ST reliability issues, but offers greater server support and easier to setup - https://community.smartthings.com/t/release-plex-home-theatre-manager-smartapp/37415
 
 ## How To Install:
 
 ### 1. Create the SmartApp
 
-A. Go to the below URL and create a new SmartApp.
+A. Go to your IDE location, the below link should re-direct you to the correct IDE location.
 
-USA:  https://graph.api.smartthings.com/ide/apps 
-Europe:  https://graph-eu01-euwest1.api.smartthings.com/ide/apps
+https://graph.api.smartthings.com/ide/apps 
 
 B. Select “From Code” for each of the below:
 
@@ -54,7 +55,9 @@ iv. Get the Token and API Endpoint values via one of the below methods:
  ii. Save the App – DO NOT PUBLISH!
 
 
-### 2. Configure the Plex2SmartThings Windows application
+### 2. Configure Your Chosen Polling Method (Choices detailled in "Additional Requirements section")
+
+**If you have chosen Plex2SmartThings EXE continue below, otherwise follow the guide provided via the link in the "Addditional Requirements" section then resume at step 4**
 
 A. Download Plex2SmartThingsV2.exe, config.config and if you like the debug launchers. (I have also put a ZIP file containing all of these in the same folder)
 
@@ -79,10 +82,9 @@ If anything isn’t working you can try enabling some extra debug output by addi
 
 ### 4. Configure the Smart App
 
-Configuration should be self explanatory, however if you require device details then the App has a section call "Last Event".
+Configuration should be self explanatory however come back here with any questions.
 
-If you start a video on your device you want to setup the device details will be shown here to make configuration in to the App easier, if the event is not appearing here then the config.config is not setup correctly and you will need to revisit step 2.
-
+If using Plex2SmartThings EXE you will need to populate "Player name, User or IP" If you require device details from  then the App has a section called "Last Event" which will tell you the details of the last event recieved.
 
 
 ### 5. Errors / Debugging
@@ -96,5 +98,8 @@ This is because SmartThings is not reciving an event, this is usually because th
 **"Last Event" in the app, but hasn't triggered the lights to change.**
 This is likely to that the "Room" is not configured correctly, re-check the name or IP you have setup
 
-**Live Logging - java.lang.NullPointerException: Cannot get property 'authorities' on null object @ line xx **
-You have not enabled OAuth in the parent app, go to Secton 1.B.iii 
+**Live Logging - java.lang.NullPointerException: Cannot get property 'authorities' on null object @ line xx**
+You have not enabled OAuth in the parent app, go to Section 1.B.iii 
+
+**I've played a video via Plex but no "Last Event" is showing**
+If the event is not appearing here then the config.config is not setup correctly and you will need to revisit step 2.
