@@ -29,18 +29,19 @@
  *  v2.3 - Cosmetic changes including hiding dimmer settings when no dimmers selected.
  *  v2.4 - Added the ability to return switches to the state before Plex started playing.
  *  v2.5 - Updated icon path
- *  v2.6 - Added MusicPlayer device handler support for Plex HT SmartApp support, fixed some bugs, made code more efficient.
+ *  v2.6 - 02/05/16 - Added MusicPlayer device handler support for Plex HT SmartApp support, fixed some bugs, made code more efficient.
+ *  v2.7 - 05/05/16 - Further code efficiencies and also added support for trailers with Plex media device type.
  */
 
 
 
 definition(
     name: "Plex Plus Child",
-    namespace: "ChristianH",
+    namespace: "jebbett",
     author: "Christian Hjelseth & Jacob Tebbett",
     description: "Allows web requests to dim/turn off/on lights when plex is playing",
     category: "My Apps",
-    parent: "ChristianH:Plex Plus",
+    parent: "jebbett:Plex Plus",
     iconUrl: "https://raw.githubusercontent.com/jebbett/Plex2SmartThings/PlexPlus/icon.png",
     iconX2Url: "https://raw.githubusercontent.com/jebbett/Plex2SmartThings/PlexPlus/icon.png",
     iconX3Url: "https://raw.githubusercontent.com/jebbett/Plex2SmartThings/PlexPlus/icon.png")
@@ -62,6 +63,7 @@ def updated() {
 }
 
 def initialize() {
+	unsubscribe()
 	state.catcherRunning = false
     subscribe(playerDT, "status", PlayerDTCommandRecieved)
 }
@@ -138,10 +140,13 @@ def mainPage() {
 // Recieve command from MusicPlayer device type
 
 def PlayerDTCommandRecieved(evt){
+	
 
-	if(evt.value=="playing"){AppCommandRecieved("onplay", "Unknown", playerDT,"ST Media Player Device", "movie")}
-	else if(evt.value=="stopped"){AppCommandRecieved("onstop", "Unknown", playerDT,"ST Media Player Device", "movie")}
-    else if(evt.value=="paused"){AppCommandRecieved("onpause", "Unknown", playerDT,"ST Media Player Device", "movie")}
+    
+
+	if(evt.value=="playing"){AppCommandRecieved("onplay", "Unknown", playerDT,"ST Media Player Device", playerDT.currentplaybackType)}
+	else if(evt.value=="stopped"){AppCommandRecieved("onstop", "Unknown", playerDT,"ST Media Player Device", playerDT.currentplaybackType)}
+    else if(evt.value=="paused"){AppCommandRecieved("onpause", "Unknown", playerDT,"ST Media Player Device", playerDT.currentplaybackType)}
     
 }
 
@@ -244,9 +249,9 @@ def SetSwitchesOff() {
 
 def SetLevels(level, acolor) {
 	// If color specified set hues
-    if (acolor != null && level != null) {        
-    def hueColor = 0
-	def saturation = 100
+    if (level != null) {        
+    	def hueColor = 23
+		def saturation = 56
 		switch(acolor) {
 			case "White":
 				hueColor = 52
@@ -287,16 +292,14 @@ def SetLevels(level, acolor) {
 				break;
 		}
         
-        hues1?.each { hue -> if (!bDimOnlyIfOn1 || "on" == hue.currentSwitch) {hue.setColor([hue: hueColor, saturation: saturation, level: level])}}
-        dimmers1?.each { bulb -> if (!bDimOnlyIfOn1 || "on" == bulb.currentSwitch) {bulb.setLevel(level)}}
+        if (bDimOnlyIfOn1){
+        	hues1?.each { hue -> if ("on" == hue.currentSwitch) {hue.setColor([hue: hueColor, saturation: saturation, level: level])}}
+        	dimmers1?.each { bulb -> if ("on" == bulb.currentSwitch) {bulb.setLevel(level)}}
+        }else{
+        	hues1?.setColor([hue: hueColor, saturation: saturation, level: level])
+            dimmers1?.setLevel(level)
+        }
 	}
-    else
-    {
-    	if (level != null) {
-			hues1?.each { hue -> if (!bDimOnlyIfOn1 || "on" == hue.currentSwitch) {hue.setLevel(level)}}
-			dimmers1?.each { bulb -> if (!bDimOnlyIfOn1 || "on" == bulb.currentSwitch) {bulb.setLevel(level)}}
-		}
-    }
 }
 
 //Save state
