@@ -31,12 +31,13 @@ import groovy.json.JsonBuilder
  *  v2.6 - Updated icon path.
  *  v2.7 - Added USA West API Info due to new data center and also added App ID and Token independently in case new servers are introduced in the future.
  *  v2.8 - Added MusicPlayer device handler support for Plex HT SmartApp support
+ *  v2.8 - Bug fix on namespace 
  *
  */
 
 definition(
     name: "Plex Plus",
-    namespace: "ChristianH",
+    namespace: "jebbett",
     author: "Christian Hjelseth & Jake Tebbett",
     description: "Allows web requests to dim/turn off/on lights when plex is playing",
     category: "My Apps",
@@ -88,7 +89,7 @@ def mainMenu() {
     dynamicPage(name: "mainMenu", title: "Rooms", install: true, uninstall: true, submitOnChange: true) {              
        
         section {
-            app(name: "childapp", appName: "Plex Plus Child", namespace: "ChristianH", title: "Create New Room", multiple: true)
+            app(name: "childapp", appName: "Plex Plus Child", namespace: "jebbett", title: "Create New Room", multiple: true)
             }	
         
         section(title: "Instructions") { 
