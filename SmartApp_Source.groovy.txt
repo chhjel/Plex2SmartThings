@@ -31,7 +31,7 @@ import groovy.json.JsonBuilder
  *  v2.6 - Updated icon path.
  *  v2.7 - Added USA West API Info due to new data center and also added App ID and Token independently in case new servers are introduced in the future.
  *  v2.8 - Added MusicPlayer device handler support for Plex HT SmartApp support
- *  v2.8 - Bug fix on namespace 
+ *  v2.9 - Bug fix on namespace 
  *
  */
 
