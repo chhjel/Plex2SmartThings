@@ -21,13 +21,7 @@ namespace Plex2SmartThings
 
         static void Main(string[] args)
         {
-            //Set debug level
-            if (Debugger.IsAttached) DebugLevel = 1;
-            else if (args.Length > 0)
-            {
-                if (args[0].Trim() == "d1") DebugLevel = 1;
-                else if (args[0].Trim() == "d2") DebugLevel = 2;
-            }
+            
 
             //TODO: move into service instead of console app?
             Console.Title = "Plex2SmartThings";
@@ -35,11 +29,14 @@ namespace Plex2SmartThings
             Console.WriteLine("---Plex2SmartThings---");
 
             Console.ForegroundColor = ConsoleColor.Green;
-            if (DebugLevel > 0) Console.WriteLine("-DebugLevel is set to " + DebugLevel);
-
+            
             Console.WriteLine("-Loading config..");
             if (!Config.TryLoad()) return;
             Console.WriteLine(" >Loaded");
+
+            //Set debug level
+            DebugLevel = Config.ConsoleDebugLevel;
+            Console.WriteLine("-DebugLevel is set to " + DebugLevel);
 
             Console.WriteLine("-Connecting to plex.. Please stand by..");
 

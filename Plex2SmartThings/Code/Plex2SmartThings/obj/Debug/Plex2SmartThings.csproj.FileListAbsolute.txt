@@ -10,3 +10,9 @@ E:\System\Desktop\Plex2SmartThings-0d609befcf05b83129f3b62abac0c19ba0ec78d2\Plex
 E:\System\Desktop\Plex2SmartThings-0d609befcf05b83129f3b62abac0c19ba0ec78d2\Plex2SmartThings-0d609befcf05b83129f3b62abac0c19ba0ec78d2\Plex2SmartThings\Plex2SmartThings\bin\Debug\normnfkd.nlp
 E:\System\Desktop\Plex2SmartThings-0d609befcf05b83129f3b62abac0c19ba0ec78d2\Plex2SmartThings-0d609befcf05b83129f3b62abac0c19ba0ec78d2\Plex2SmartThings\Plex2SmartThings\obj\Debug\Plex2SmartThings.exe
 E:\System\Desktop\Plex2SmartThings-0d609befcf05b83129f3b62abac0c19ba0ec78d2\Plex2SmartThings-0d609befcf05b83129f3b62abac0c19ba0ec78d2\Plex2SmartThings\Plex2SmartThings\obj\Debug\Plex2SmartThings.pdb
+E:\System\JakeT Documents\GitHub\Plex2SmartThings\Plex2SmartThings\Code\Plex2SmartThings\bin\Debug\config.config
+E:\System\JakeT Documents\GitHub\Plex2SmartThings\Plex2SmartThings\Code\Plex2SmartThings\bin\Debug\Plex2SmartThings.exe
+E:\System\JakeT Documents\GitHub\Plex2SmartThings\Plex2SmartThings\Code\Plex2SmartThings\bin\Debug\Plex2SmartThings.pdb
+E:\System\JakeT Documents\GitHub\Plex2SmartThings\Plex2SmartThings\Code\Plex2SmartThings\obj\Debug\Plex2SmartThings.csprojResolveAssemblyReference.cache
+E:\System\JakeT Documents\GitHub\Plex2SmartThings\Plex2SmartThings\Code\Plex2SmartThings\obj\Debug\Plex2SmartThings.exe
+E:\System\JakeT Documents\GitHub\Plex2SmartThings\Plex2SmartThings\Code\Plex2SmartThings\obj\Debug\Plex2SmartThings.pdb

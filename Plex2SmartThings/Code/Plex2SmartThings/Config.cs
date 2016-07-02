@@ -13,7 +13,7 @@ namespace Plex2SmartThings
         public static int CheckInterval { get; private set; }
 
         public static string PlexStatusUrl { get; private set; }
-
+		public static int ConsoleDebugLevel { get; private set; }
         public static string Endpoint_AccessToken { get; private set; }
         public static string EndpointUrl_OnPlay { get; private set; }
         public static string EndpointUrl_OnPause { get; private set; }
@@ -74,6 +74,7 @@ namespace Plex2SmartThings
             XElement ePlexCheck = eConfig.Element("plexCheck");
             CheckInterval = int.Parse(ePlexCheck.Attribute("checkInterval").Value);
             PlexStatusUrl = ePlexCheck.Attribute("plexStatusUrl").Value;
+			ConsoleDebugLevel = int.Parse(ePlexCheck.Attribute("debugLevel").Value);
 
             //smartThingsEndpoints
             XElement eSTE = eConfig.Element("smartThingsEndpoints");

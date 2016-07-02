@@ -31,6 +31,7 @@
  *  v2.5 - Updated icon path
  *  v2.6 - 02/05/16 - Added MusicPlayer device handler support for Plex HT SmartApp support, fixed some bugs, made code more efficient.
  *  v2.7 - 05/05/16 - Further code efficiencies and also added support for trailers with Plex media device type.
+ *  v2.8 - 02/07/16 - Removed routine handling, due to errors on some android devices. Added running only in selected modes.
  */
 
 
@@ -77,12 +78,6 @@ def mainPage() {
                 label title: "Enter Room Name", defaultValue: app.label, required: false
         }
 		
-		//Get defined routines
-		def actions = location.helloHome?.getPhrases()*.label
-		if (actions) {
-			actions.sort()
-		}
-		
 		//ROOM
 		section("Players") {
             input(name: "playerA1", type: "text", title: "Player name, User or IP", required:false)
@@ -120,19 +115,15 @@ def mainPage() {
            
             
         }
-		section("Modes / Routines") {
+		section("Modes") {
 			input "playMode1", "mode", title: "Mode when playing", required:false
 			input "pauseMode1", "mode", title: "Mode when paused", required:false
 			input "stopMode1", "mode", title: "Mode when stopped", required:false
-			if (actions) {
-				input "playRoutine1", "enum", title: "Routine when playing", required:false, options: actions
-				input "pauseRoutine1", "enum", title: "Routine when paused", required:false, options: actions
-				input "stopRoutine1", "enum", title: "Routine when stopped", required:false, options: actions
-			}
 		}
 		section("Settings") {
 			input(name: "bTreatTrailersAsPause1", type: "bool", title: "Use pause config for movie trailers")
             input "disabled", "capability.switch", title: "Switch to disable when On", required: false, multiple: false
+            input "activeMode", "mode", title: "Only run in selected modes", multiple: true, required:false
 		}
     }
 }
@@ -141,9 +132,9 @@ def mainPage() {
 
 def PlayerDTCommandRecieved(evt){
 	
-
+	//If no device type configured do not run the below code
+	if(!playerDT){return}
     
-
 	if(evt.value=="playing"){AppCommandRecieved("onplay", "Unknown", playerDT,"ST Media Player Device", playerDT.currentplaybackType)}
 	else if(evt.value=="stopped"){AppCommandRecieved("onstop", "Unknown", playerDT,"ST Media Player Device", playerDT.currentplaybackType)}
     else if(evt.value=="paused"){AppCommandRecieved("onpause", "Unknown", playerDT,"ST Media Player Device", playerDT.currentplaybackType)}
@@ -162,11 +153,13 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
 	def roomFound = findAMatch(playerName, playerIP, userName)
     
 // Exit if no room found
-	if(roomFound == -1) {return}
-        
+	if(roomFound == -1) {logWriterChild ("->No match found for room: ${app.label}"); return}
+    logWriterChild ("->Match found for room: ${app.label}")
+    
 // Stop running if disable switch is activated    
 
     if (disabled != null) {if(disabled.currentSwitch == "on") {logWriterChild ("->Disabled via switch"); return}}
+    if (activeMode != null && !activeMode.contains(location.mode)) {logWriterChild ("->Disabled via invalid mode"); return}
     
 //Translate play to pause if bTreatTrailersAsPause is enabled for this room
     if(bTreatTrailersAsPause1 && mediaType == "clip" && command == "onplay") {command = "onpause"}
@@ -182,7 +175,6 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
             state.catcherRunning = true
         }
         ChangeMode(playMode1)
-		ExecRoutine(playRoutine1)
 		SetLevels(iLevelOnPlay1, colorOnPlay)
         SetSwitchesOff()
         mSwitchPlay?.on()
@@ -190,7 +182,6 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
     else if (command == "onpause") {        
         logWriterChild ("->Paused")
         ChangeMode(pauseMode1)
-		ExecRoutine(pauseRoutine1)
     	SetLevels(iLevelOnPause1, colorOnPause)
         mSwitchPause?.on()
         if(bSwitchOffOnPause1) {
@@ -209,7 +200,6 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
     else if (command == "onstop") {
         logWriterChild ("->Stopped")
         ChangeMode(stopMode1)
-		ExecRoutine(stopRoutine1)
     	SetLevels(iLevelOnStop1, colorOnStop)
         mSwitchStop?.on()
         if(state.catcherRunning && bReturnState1){
@@ -224,11 +214,6 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
 }
 
 // Actions
-
-def ExecRoutine(routine) {
-	if(!routine) return
-	location.helloHome?.execute(routine)
-}
 
 def ChangeMode(newMode) {
     if (newMode != null && newMode != "" && location.mode != newMode) {

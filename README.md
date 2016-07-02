@@ -59,19 +59,25 @@ iv. Get the Token and API Endpoint values via one of the below methods:
 
 **If you have chosen Plex2SmartThings EXE continue below, otherwise follow the guide provided via the link in the "Addditional Requirements" section then resume at step 4**
 
-A. Download Plex2SmartThingsV2.exe, config.config and if you like the debug launchers. (I have also put a ZIP file containing all of these in the same folder)
+A. Download Plex2SmartThingsV3.exe and config.config. (I have also put a ZIP file containing all of these in the same folder)
 
 B. Open the config.config file.
 
-C. In config/smartThingsEndpoints fill in your API token and add the APP ID to the endpoint urls from the previous section. Be sure to keep the /statechanged/on* at the end of the urls.
+C. In config/smartThingsEndpoints fill in your API token and add the APP ID to the endpoint urls from the previous section.
+    <!DOCTYPE root [
+    <!ENTITY accessToken "123-123-123">
+    <!ENTITY appId "abc-abc-abc">
+    <!ENTITY ide "https://graph-eu01-euwest1.api.smartthings.com">
+    <!ENTITY plexStatusUrl "http://localhost:32400/status/sessions">
+    ]>
 
 D. Be sure to also check that your IDE URL matches the URL in config.config, if you have the URL from the app then this should be correct, if you were unable to get this from the app then you willl need to copy from IDE, it'll be somethign like "graph-na02-useast1.api.smartthings.com"
   
-E. If Plex and this application is not running on the same server then enter the URL to the session status page of your Plex server in the config/plexCheck/@plexStatusUrl attribute.
+E. If Plex and this application is not running on the same server then enter the URL to the session status page of your Plex server in the plexStatusUrl attribute.
 
-F. If you have Plex Pass users with PINs be sure to append your plex_token to the end of the url in the step above. (e.g. http://localhost:32400/status/sessions?X-Plex-Token='MyPlexToken'). To find your plex token follow [this guide.](https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token)
+F. If you have Plex Pass users with PINs be sure to append your plex_token to the end of the url in the step above. (e.g. http://localhost:32400/status/sessions?X-Plex-Token='MYPLEXTOKEN'). To find your plex token follow [this guide.](https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token)
 
-G. The polling interval can also be configured, however the standard value should suffice.
+G. The polling interval and debugging can also be configured, however the standard value should suffice.
 
 ### 3. Run Plex2SmartThings
 
