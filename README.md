@@ -64,12 +64,11 @@ A. Download Plex2SmartThingsV3.exe and config.config. (I have also put a ZIP fil
 B. Open the config.config file.
 
 C. In config/smartThingsEndpoints fill in your API token and add the APP ID to the endpoint urls from the previous section.
-    <!DOCTYPE root [
+
     <!ENTITY accessToken "123-123-123">
     <!ENTITY appId "abc-abc-abc">
     <!ENTITY ide "https://graph-eu01-euwest1.api.smartthings.com">
     <!ENTITY plexStatusUrl "http://localhost:32400/status/sessions">
-    ]>
 
 D. Be sure to also check that your IDE URL matches the URL in config.config, if you have the URL from the app then this should be correct, if you were unable to get this from the app then you willl need to copy from IDE, it'll be somethign like "graph-na02-useast1.api.smartthings.com"
   
