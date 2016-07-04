@@ -32,6 +32,7 @@
  *  v2.6 - 02/05/16 - Added MusicPlayer device handler support for Plex HT SmartApp support, fixed some bugs, made code more efficient.
  *  v2.7 - 05/05/16 - Further code efficiencies and also added support for trailers with Plex media device type.
  *  v2.8 - 02/07/16 - Removed routine handling, due to errors on some android devices. Added running only in selected modes.
+ *  v2.9 - 04/07/16 - Added cancellable delay on stop action.
  */
 
 
@@ -124,6 +125,7 @@ def mainPage() {
 			input(name: "bTreatTrailersAsPause1", type: "bool", title: "Use pause config for movie trailers")
             input "disabled", "capability.switch", title: "Switch to disable when On", required: false, multiple: false
             input "activeMode", "mode", title: "Only run in selected modes", multiple: true, required:false
+            input(name: "stopDelay", type: "number", title: "Delay stop action", required:true, defaultValue:5)
 		}
     }
 }
@@ -169,6 +171,7 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
 
     if (command == "onplay") {
     	logWriterChild ("->Playing")
+        unschedule(StopCommand)
         if(!state.catcherRunning){
         	catchState("switches1")
     		catchState("switches2")
@@ -181,6 +184,7 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
     }
     else if (command == "onpause") {        
         logWriterChild ("->Paused")
+        unschedule(StopCommand)
         ChangeMode(pauseMode1)
     	SetLevels(iLevelOnPause1, colorOnPause)
         mSwitchPause?.on()
@@ -199,7 +203,16 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
     }
     else if (command == "onstop") {
         logWriterChild ("->Stopped")
-        ChangeMode(stopMode1)
+        if(stopDelay == "0"){StopCommand()}else{
+        	runIn(stopDelay, StopCommand)
+        }
+    }
+}
+
+//Stop command
+def StopCommand(){
+
+		ChangeMode(stopMode1)
     	SetLevels(iLevelOnStop1, colorOnStop)
         mSwitchStop?.on()
         if(state.catcherRunning && bReturnState1){
@@ -210,8 +223,9 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
         	SetSwitchesOn()
             state.catcherRunning = false
         }
-    }
 }
+
+
 
 // Actions
 
