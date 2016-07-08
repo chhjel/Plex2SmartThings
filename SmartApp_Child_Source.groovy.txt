@@ -33,6 +33,7 @@
  *  v2.7 - 05/05/16 - Further code efficiencies and also added support for trailers with Plex media device type.
  *  v2.8 - 02/07/16 - Removed routine handling, due to errors on some android devices. Added running only in selected modes.
  *  v2.9 - 04/07/16 - Added cancellable delay on stop action.
+ *  v2.10- 07/07/16 - Re-worded bulbs section
  */
 
 
@@ -86,9 +87,9 @@ def mainPage() {
             input(name: "playerDT", type: "capability.musicPlayer", title: "ST Media Player Device", multiple: false, required:false)
             paragraph "To identify player, you can use either Player Device Name, Username, IP address or * in order to match any player where using the Plex2SmartThings program on your computer or you can use a supported media player device type."
         }
-		section("Lights (Hue bulbs have color)") {
-			input "dimmers1", "capability.switchLevel", title: "Dimmers", multiple: true, required: false, submitOnChange: true
-            input "hues1", "capability.colorControl", title: "Hue Bulbs", multiple:true, required:false, submitOnChange: true
+		section("Lights") {
+			input "dimmers1", "capability.switchLevel", title: "Adjust level of these bulbs", multiple: true, required: false, submitOnChange: true
+            input "hues1", "capability.colorControl", title: "Adjust level and color of these bulbs", multiple:true, required:false, submitOnChange: true
             if(hues1||dimmers1) {
             input(name: "iLevelOnPlay1", type: "number", title: "Level on Play", defaultValue:0)
             input(name: "iLevelOnPause1", type: "number", title: "Level on Pause", defaultValue:30)
