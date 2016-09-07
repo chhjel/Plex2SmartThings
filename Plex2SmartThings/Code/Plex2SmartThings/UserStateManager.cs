@@ -170,12 +170,7 @@ namespace Plex2SmartThings
                 }
             }
 
-            public string GetFirstTenCharacters(string s)
-            {
-                // This says "If string s is less than 10 characters, return s.
-                // Otherwise, return the first 10 characters of s."
-                return (s.Length < 10) ? s : s.Substring(0, 10);
-            }
+            
 
             private Thread stateDelayThread;
             private int Delay;
@@ -209,7 +204,7 @@ namespace Plex2SmartThings
                 else if (CurrentState == PlayStates.PAUSE) endpoint = Config.EndpointUrl_OnPause;
                 else if (CurrentState == PlayStates.STOP) endpoint = Config.EndpointUrl_OnStop;
 
-                string PlayerNameShort = this.GetFirstTenCharacters(PlayerName);
+                
 
                 //Prepare for first param, just in case there is already added some params in the url in the config file
                 if (!endpoint.Contains("?")) endpoint += "?";
@@ -217,7 +212,7 @@ namespace Plex2SmartThings
 
                 //Add the GET parameters to the request
                 endpoint += "access_token=" + HttpUtility.UrlEncode(Config.Endpoint_AccessToken);
-                endpoint += "&player=" + HttpUtility.UrlEncode(PlayerNameShort);
+                endpoint += "&player=" + HttpUtility.UrlEncode(PlayerName);
                 endpoint += "&user=" + HttpUtility.UrlEncode(UserName);
                 endpoint += "&type=" + HttpUtility.UrlEncode(Type);
 				endpoint += "&ipadd=" + HttpUtility.UrlEncode(IPAdd);
