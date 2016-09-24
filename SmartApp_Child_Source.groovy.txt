@@ -34,6 +34,7 @@
  *  v2.8 - 02/07/16 - Removed routine handling, due to errors on some android devices. Added running only in selected modes.
  *  v2.9 - 04/07/16 - Added cancellable delay on stop action.
  *  v2.10- 07/07/16 - Re-worded bulbs section
+ *  v2.11- 24/09/16 - Added support for delay on pause, triggering based on type of media and fix to debugging
  */
 
 
@@ -61,6 +62,7 @@ def installed() {
 
 def updated() {
     log.debug "Updated with settings: ${settings}"
+    logWriterChild("Hello")
     unschedule()
     initialize()
 }
@@ -86,6 +88,10 @@ def mainPage() {
             input(name: "playerB1", type: "text", title: "Player name, User or IP (alternative)", required:false)
             input(name: "playerDT", type: "capability.musicPlayer", title: "ST Media Player Device", multiple: false, required:false)
             paragraph "To identify player, you can use either Player Device Name, Username, IP address or * in order to match any player where using the Plex2SmartThings program on your computer or you can use a supported media player device type."
+        }
+        section ("Media Type"){
+        	input "mediaTypeOk", "enum", title: "Only for media types:", multiple: true, submitOnChange: true, required: false,
+			options: ['movie', 'episode', 'clip', 'track']
         }
 		section("Lights") {
 			input "dimmers1", "capability.switchLevel", title: "Adjust level of these bulbs", multiple: true, required: false, submitOnChange: true
@@ -114,7 +120,6 @@ def mainPage() {
             input "mSwitchPlay", "capability.switch", title:"Momentary switch on Play", multiple: true, required: false
             input "mSwitchPause", "capability.switch", title:"Momentary switch on Pause", multiple: true, required: false
             input "mSwitchStop", "capability.switch", title:"Momentary switch on Stop", multiple: true, required: false
-           
             
         }
 		section("Modes") {
@@ -127,6 +132,7 @@ def mainPage() {
             input "disabled", "capability.switch", title: "Switch to disable when On", required: false, multiple: false
             input "activeMode", "mode", title: "Only run in selected modes", multiple: true, required:false
             input(name: "stopDelay", type: "number", title: "Delay stop action", required:true, defaultValue:5)
+            input(name: "pauseDelay", type: "number", title: "Delay pause action", required:true, defaultValue:3)
 		}
     }
 }
@@ -157,7 +163,14 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
     
 // Exit if no room found
 	if(roomFound == -1) {logWriterChild ("->No match found for room: ${app.label}"); return}
-    logWriterChild ("->Match found for room: ${app.label}")
+    logWriterChild ("Match found for room")
+
+// Check if Media Type is correct
+	if(mediaTypeOk){
+		def mediaTypeFound = mediaTypeOk.find { item -> item == mediaType}
+    	if(mediaTypeFound == null) {logWriterChild ("->Match NOT found for media type: ${mediaType}"); return}
+	}
+   
     
 // Stop running if disable switch is activated    
 
@@ -167,12 +180,14 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
 //Translate play to pause if bTreatTrailersAsPause is enabled for this room
     if(bTreatTrailersAsPause1 && mediaType == "clip" && command == "onplay") {command = "onpause"}
 
+// Unschedule delays
+	unschedule(StopCommand)
+    unschedule(PauseCommand)
 
 // Play, Pause or Stop
 
     if (command == "onplay") {
     	logWriterChild ("->Playing")
-        unschedule(StopCommand)
         if(!state.catcherRunning){
         	catchState("switches1")
     		catchState("switches2")
@@ -185,8 +200,22 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
     }
     else if (command == "onpause") {        
         logWriterChild ("->Paused")
-        unschedule(StopCommand)
-        ChangeMode(pauseMode1)
+        if(pauseDelay == "0"){PauseCommand()}else{
+        	runIn(stopDelay, PauseCommand)
+        }
+    }
+    else if (command == "onstop") {
+        logWriterChild ("->Stopped")
+        if(stopDelay == "0"){StopCommand()}else{
+        	runIn(stopDelay, StopCommand)
+        }
+    }
+}
+
+
+
+def PauseCommand(){
+		ChangeMode(pauseMode1)
     	SetLevels(iLevelOnPause1, colorOnPause)
         mSwitchPause?.on()
         if(bSwitchOffOnPause1) {
@@ -201,14 +230,9 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
             	state.catcherRunning = false
         	}
         }
-    }
-    else if (command == "onstop") {
-        logWriterChild ("->Stopped")
-        if(stopDelay == "0"){StopCommand()}else{
-        	runIn(stopDelay, StopCommand)
-        }
-    }
 }
+
+
 
 //Stop command
 def StopCommand(){
@@ -319,7 +343,7 @@ private returnToState(switches) {
 // Debug logging
 
 private def logWriterChild(value) {	
-    parent.logWriter (value)
+    if(parent.debugLogging){log.debug "${value}"}
 }
 
 
@@ -328,3 +352,4 @@ def findAMatch(player, IP, user) {
     if(playerA1 == "*" || playerB1 == "*" || playerA1 == player || playerB1 == player || playerA1 == IP || playerB1 == IP || playerA1 == user || playerB1 == user || IP == "ST Media Player Device") return 1;
     else return -1;
 }
+

@@ -31,7 +31,8 @@ import groovy.json.JsonBuilder
  *  v2.6 - Updated icon path.
  *  v2.7 - Added USA West API Info due to new data center and also added App ID and Token independently in case new servers are introduced in the future.
  *  v2.8 - Added MusicPlayer device handler support for Plex HT SmartApp support
- *  v2.9 - Bug fix on namespace 
+ *  v2.9 - Bug fix on namespace
+ *  v2.10- Fixed issue with debugging not working
  *
  */
 
@@ -84,8 +85,6 @@ preferences {
 
 def mainMenu() {
 
-	if (state.debugLogging == null) 	{ state.debugLogging = false }
-
     dynamicPage(name: "mainMenu", title: "Rooms", install: true, uninstall: true, submitOnChange: true) {              
        
         section {
@@ -113,18 +112,7 @@ def mainMenu() {
         section(title: "Debug Logging") {
        		paragraph "If you experiencing issues please enable logging to help troubleshoot"
             input "debugLogging", "bool", title: "Debug Logging...", required: false, defaultValue: false, refreshAfterSelection: true
-            	
-            if (debugLogging) { 
-            	state.debugLogging = true 
-                logWriter("Debug Logging has been ${state.debugLogging.toString().toUpperCase()}")
-            }
-            else { 
-            	state.debugLogging = false 
-            	logWriter("Debug Logging has been ${state.debugLogging.toString().toUpperCase()}")    
-            }
     	}
-        
-        
     }
 }
 
@@ -234,9 +222,7 @@ mappings {
 }
 
 private def logWriter(value) {
-	if (state.debugLogging) {
-        log.debug "${value}"
-    }	
+	if (debugLogging) {log.debug "${value}"}	
 }
 
 
