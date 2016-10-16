@@ -35,6 +35,7 @@
  *  v2.9 - 04/07/16 - Added cancellable delay on stop action.
  *  v2.10- 07/07/16 - Re-worded bulbs section
  *  v2.11- 24/09/16 - Added support for delay on pause, triggering based on type of media and fix to debugging
+ *  v2.11- 16/10/16 - Bug fix on pause delay (was using stop delay)
  */
 
 
@@ -62,7 +63,6 @@ def installed() {
 
 def updated() {
     log.debug "Updated with settings: ${settings}"
-    logWriterChild("Hello")
     unschedule()
     initialize()
 }
@@ -201,7 +201,7 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
     else if (command == "onpause") {        
         logWriterChild ("->Paused")
         if(pauseDelay == "0"){PauseCommand()}else{
-        	runIn(stopDelay, PauseCommand)
+        	runIn(pauseDelay, PauseCommand)
         }
     }
     else if (command == "onstop") {
