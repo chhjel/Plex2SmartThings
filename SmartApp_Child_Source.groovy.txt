@@ -90,7 +90,7 @@ def mainPage() {
         section ("When this happens"){
         	href(name: "pageWhenThis", title:"When Event Comes From", description: "", page: "pageWhenThis", required: true, state: "complete", image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/tick_blue.png")      
 
-        	href(name: "pageDoThis", title:"Trigger these lights / switches", description: "", page: "pageDoThis", required: true, state: "complete", image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/favourite_blue.png")      
+        	href(name: "pageDoThis", title:"Trigger these actions", description: "", page: "pageDoThis", required: true, state: "complete", image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/favourite_blue.png")      
 
         	href(name: "pageMediaSettings", title:"With these settings", description: "", page: "pageMediaSettings", required: true, state: "complete", image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/setting_blue.png")      
       	}

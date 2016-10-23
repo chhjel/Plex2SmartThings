@@ -23,6 +23,8 @@ Either:
 **- Plex2SmartThings** - Windows Application - This is the most reliable method at the moment due to ST reliability issues and also should be able to handle any client and can select based on many variables. A computer will need to run a program to poll Plex, so will need to be switched on when you are using Plex for this to work (This does not need to be on the same computer as the Plex server)
 **- Plex HT Manager** - Non Windows / NAS etc. - This is an app and custom device type, which uses ST to poll Plex every 10 seconds, as such is subject to ST reliability issues, but offers greater server support and easier to setup - https://community.smartthings.com/t/release-plex-home-theatre-manager-smartapp/37415
 
+**- Plex Plus Device Type (Optional)** - Now you can install this device type under "My Device Handlers" and then create new devices in the Smart App then associate the device under the "Trigger These Actions" section. This allows you to interface with other applications such as Core and Rule Machine.
+
 ## How To Install:
 
 ### 1. Create the SmartApp
