@@ -36,6 +36,7 @@
  *  v2.10- 07/07/16 - Re-worded bulbs section
  *  v2.11- 24/09/16 - Added support for delay on pause, triggering based on type of media and fix to debugging
  *  v2.11- 16/10/16 - Bug fix on pause delay (was using stop delay)
+ *  v2.12- 21/10/16 - Code optimisation, better app layout and support for pushing to a Plex Plus or Plex HT Device Type
  */
 
 
@@ -54,6 +55,11 @@ definition(
 
 preferences {
     page name: "mainPage", install: false, uninstall: true
+    page name: "pageDoThis"
+    page name: "pageWhenThis"
+    page name: "pageMediaSettings"
+
+    
 }
 
 def installed() {
@@ -81,19 +87,20 @@ def mainPage() {
         section() {
                 label title: "Enter Room Name", defaultValue: app.label, required: false
         }
-		
-		//ROOM
-		section("Players") {
-            input(name: "playerA1", type: "text", title: "Player name, User or IP", required:false)
-            input(name: "playerB1", type: "text", title: "Player name, User or IP (alternative)", required:false)
-            input(name: "playerDT", type: "capability.musicPlayer", title: "ST Media Player Device", multiple: false, required:false)
-            paragraph "To identify player, you can use either Player Device Name, Username, IP address or * in order to match any player where using the Plex2SmartThings program on your computer or you can use a supported media player device type."
-        }
-        section ("Media Type"){
-        	input "mediaTypeOk", "enum", title: "Only for media types:", multiple: true, submitOnChange: true, required: false,
-			options: ['movie', 'episode', 'clip', 'track']
-        }
-		section("Lights") {
+        section ("When this happens"){
+        	href(name: "pageWhenThis", title:"When Event Comes From", description: "", page: "pageWhenThis", required: true, state: "complete", image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/tick_blue.png")      
+
+        	href(name: "pageDoThis", title:"Trigger these lights / switches", description: "", page: "pageDoThis", required: true, state: "complete", image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/favourite_blue.png")      
+
+        	href(name: "pageMediaSettings", title:"With these settings", description: "", page: "pageMediaSettings", required: true, state: "complete", image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/setting_blue.png")      
+      	}
+    }
+}
+
+
+def pageDoThis(){
+	dynamicPage(name: "pageDoThis", uninstall: false) {
+        section("Lights") {
 			input "dimmers1", "capability.switchLevel", title: "Adjust level of these bulbs", multiple: true, required: false, submitOnChange: true
             input "hues1", "capability.colorControl", title: "Adjust level and color of these bulbs", multiple:true, required:false, submitOnChange: true
             if(hues1||dimmers1) {
@@ -127,15 +134,44 @@ def mainPage() {
 			input "pauseMode1", "mode", title: "Mode when paused", required:false
 			input "stopMode1", "mode", title: "Mode when stopped", required:false
 		}
-		section("Settings") {
+        section("Update This Device"){
+        	input(name: "PlexPlusDT", type: "capability.musicPlayer", title: "Update This Device", description: "Use a Plex Plus or HT Custom Device", multiple: false, state: null, required:false)
+        }
+	}
+}
+
+
+def pageWhenThis(){
+	dynamicPage(name: "pageWhenThis", uninstall: false) {
+    	section("When Plex2SmartThings sends and event matching:") {
+            input(name: "playerA1", type: "text", title: "Player name, User or IP", required:false)
+            input(name: "playerB1", type: "text", title: "Player name, User or IP (alternative)", required:false)
+        }
+        section("Or when a media player device changes state:") {
+            input(name: "playerDT", type: "capability.musicPlayer", title: "ST Media Player Device", multiple: false, required:false)
+        }
+        section("Notes"){
+        	paragraph "To identify player, you can use either Player Device Name, Username, IP address or * in order to match any player where using the Plex2SmartThings program on your computer. \n\nOr you can use a supported media player device type."
+       }
+	}
+}
+
+def pageMediaSettings(){
+	dynamicPage(name: "pageMediaSettings", uninstall: false) {
+    	section("Media Settings") {	
 			input(name: "bTreatTrailersAsPause1", type: "bool", title: "Use pause config for movie trailers")
-            input "disabled", "capability.switch", title: "Switch to disable when On", required: false, multiple: false
-            input "activeMode", "mode", title: "Only run in selected modes", multiple: true, required:false
             input(name: "stopDelay", type: "number", title: "Delay stop action", required:true, defaultValue:5)
             input(name: "pauseDelay", type: "number", title: "Delay pause action", required:true, defaultValue:3)
 		}
-    }
+        section("Restrictions") {
+			input "mediaTypeOk", "enum", title: "Only for media types:", multiple: true, submitOnChange: true, required: false,
+			options: ['movie', 'episode', 'clip', 'track']
+        	input "disabled", "capability.switch", title: "Switch to disable when On", required: false, multiple: false
+            input "activeMode", "mode", title: "Only run in selected modes", multiple: true, required:false
+        }
+	}
 }
+
 
 // Recieve command from MusicPlayer device type
 
@@ -151,31 +187,28 @@ def PlayerDTCommandRecieved(evt){
 }
 
 
-// Recieve command from parent app
-
 def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
 
 //Log last event
 	parent.StoreLastEvent(command, userName, playerName, playerIP, mediaType)
 
 //Check if room found
-	def roomFound = findAMatch(playerName, playerIP, userName)
+	def allowedDevs = ["*", "$playerIP", "$playerName", "$userName"]
     
-// Exit if no room found
-	if(roomFound == -1) {logWriterChild ("->No match found for room: ${app.label}"); return}
-    logWriterChild ("Match found for room")
+    if (allowedDevs.contains("${playerA1}")){logWriterChild ("->Player 1 Match: ${app.label}")}
+    else if (allowedDevs.contains("${playerB1}")){logWriterChild ("->Player 2 Match: ${app.label}")}
+    else if ("$playerIP" == "ST Media Player Device"){logWriterChild ("->ST Device Type Match: ${app.label}")}
+    else{logWriterChild ("->No match found for room: ${app.label}"); return}
+    
+// Stop running if disable switch is activated    
+    if (disabled != null) {if(disabled.currentSwitch == "on") {logWriterChild ("->Disabled via switch"); return}}
+    if (activeMode != null && !activeMode.contains(location.mode)) {logWriterChild ("->Disabled via invalid mode"); return}
 
 // Check if Media Type is correct
 	if(mediaTypeOk){
 		def mediaTypeFound = mediaTypeOk.find { item -> item == mediaType}
     	if(mediaTypeFound == null) {logWriterChild ("->Match NOT found for media type: ${mediaType}"); return}
 	}
-   
-    
-// Stop running if disable switch is activated    
-
-    if (disabled != null) {if(disabled.currentSwitch == "on") {logWriterChild ("->Disabled via switch"); return}}
-    if (activeMode != null && !activeMode.contains(location.mode)) {logWriterChild ("->Disabled via invalid mode"); return}
     
 //Translate play to pause if bTreatTrailersAsPause is enabled for this room
     if(bTreatTrailersAsPause1 && mediaType == "clip" && command == "onplay") {command = "onpause"}
@@ -184,83 +217,87 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
 	unschedule(StopCommand)
     unschedule(PauseCommand)
 
-// Play, Pause or Stop
+// Send media type to Plex Plus Device Type if configured.
+	try { settings.PlexPlusDT?.playbackType("${mediaType}") }
+	catch (Exception e) {log.info "Playback Type Not Supported: $e"}
 
+// Play, Pause or Stop
     if (command == "onplay") {
     	logWriterChild ("->Playing")
-        if(!state.catcherRunning){
-        	catchState("switches1")
-    		catchState("switches2")
-            state.catcherRunning = true
-        }
-        ChangeMode(playMode1)
-		SetLevels(iLevelOnPlay1, colorOnPlay)
-        SetSwitchesOff()
-        mSwitchPlay?.on()
+        PlayCommand()
     }
     else if (command == "onpause") {        
         logWriterChild ("->Paused")
-        if(pauseDelay == "0"){PauseCommand()}else{
-        	runIn(pauseDelay, PauseCommand)
-        }
+        if(settings.pauseDelay){
+        	if(pauseDelay == "0"){PauseCommand()}else{
+            	logWriterChild ("-> Pause Action Delay")
+        		runIn(pauseDelay, PauseCommand)
+        	}
+    	}
     }
     else if (command == "onstop") {
         logWriterChild ("->Stopped")
-        if(stopDelay == "0"){StopCommand()}else{
-        	runIn(stopDelay, StopCommand)
+        if(settings.stopDelay){
+        	if(stopDelay == "0"){StopCommand()}else{
+            	logWriterChild ("-> Stop Action Delay")
+        		runIn(stopDelay, StopCommand)
+        	}
         }
     }
 }
 
-
-
-def PauseCommand(){
-		ChangeMode(pauseMode1)
-    	SetLevels(iLevelOnPause1, colorOnPause)
-        mSwitchPause?.on()
-        if(bSwitchOffOnPause1) {
-       		SetSwitchesOff()
-        } else {
-        	if(state.catcherRunning && bReturnState1){
-        		returnToState("switches1")
-    			returnToState("switches2")
-            	state.catcherRunning = false
-        	}else{
-        		SetSwitchesOn()
-            	state.catcherRunning = false
-        	}
-        }
+def PlayCommand(){
+	if(!state.catcherRunning){
+        catchState("switches1")
+    	catchState("switches2")
+        state.catcherRunning = true
+    }
+    if(settings?.playMode1){setLocationMode(playMode1)}
+	SetLevels(iLevelOnPlay1, colorOnPlay)
+    SetSwitchesOff()
+    mSwitchPlay?.on()
+    PlexPlusDT?.play()
 }
 
-
+def PauseCommand(){
+	
+    if(settings?.pauseMode1){setLocationMode(pauseMode1)}
+   	SetLevels(iLevelOnPause1, colorOnPause)
+    mSwitchPause?.on()
+    PlexPlusDT?.pause()
+    if(bSwitchOffOnPause1) {
+   		SetSwitchesOff()
+    } else {
+       	if(state.catcherRunning && bReturnState1){
+       		returnToState("switches1")
+   			returnToState("switches2")
+           	state.catcherRunning = false
+       	}else{
+       		SetSwitchesOn()
+           	state.catcherRunning = false
+       	}
+    }
+}
 
 //Stop command
 def StopCommand(){
 
-		ChangeMode(stopMode1)
-    	SetLevels(iLevelOnStop1, colorOnStop)
-        mSwitchStop?.on()
-        if(state.catcherRunning && bReturnState1){
-        	returnToState("switches1")
-    		returnToState("switches2")
-            state.catcherRunning = false
-        }else{
-        	SetSwitchesOn()
-            state.catcherRunning = false
-        }
+	if(settings?.stopMode1){setLocationMode(settings?.stopMode1)}
+    SetLevels(iLevelOnStop1, colorOnStop)
+    mSwitchStop?.on()
+    if(state.catcherRunning && bReturnState1){
+       	returnToState("switches1")
+    	returnToState("switches2")
+        state.catcherRunning = false
+    }else{
+       	SetSwitchesOn()
+        state.catcherRunning = false
+    }
+    PlexPlusDT?.stop()
 }
-
 
 
 // Actions
-
-def ChangeMode(newMode) {
-    if (newMode != null && newMode != "" && location.mode != newMode) {
-        if (location.modes?.find{it.name == newMode}) {setLocationMode(newMode)}
-        else {log.warn "Tried to change to undefined mode '${newMode}'"}
-    }
-}
-
 def SetSwitchesOn() {
 	switches1?.on()
     switches2?.off()
@@ -269,7 +306,6 @@ def SetSwitchesOff() {
 	switches1?.off()
     switches2?.on()
 }
-
 
 def SetLevels(level, acolor) {
 	// If color specified set hues
@@ -345,11 +381,3 @@ private returnToState(switches) {
 private def logWriterChild(value) {	
     if(parent.debugLogging){log.debug "${value}"}
 }
-
-
-//Is the player, IP or user found
-def findAMatch(player, IP, user) {
-    if(playerA1 == "*" || playerB1 == "*" || playerA1 == player || playerB1 == player || playerA1 == IP || playerB1 == IP || playerA1 == user || playerB1 == user || IP == "ST Media Player Device") return 1;
-    else return -1;
-}
-

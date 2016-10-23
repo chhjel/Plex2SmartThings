@@ -33,6 +33,7 @@ import groovy.json.JsonBuilder
  *  v2.8 - Added MusicPlayer device handler support for Plex HT SmartApp support
  *  v2.9 - Bug fix on namespace
  *  v2.10- Fixed issue with debugging not working
+ *	v2.11- Added handler for creating Plex Plus Device Types
  *
  */
 
@@ -81,6 +82,11 @@ preferences {
     page(name: "lastEvt")
     page(name: "P2ST")
     page(name: "instructions")
+    page(name: "pageDevice")
+    page(name: "pageDevDetails")
+    page(name: "pageDevDelete")
+    page(name: "pageDevAdd")
+    
 }
 
 def mainMenu() {
@@ -91,27 +97,21 @@ def mainMenu() {
             app(name: "childapp", appName: "Plex Plus Child", namespace: "jebbett", title: "Create New Room", multiple: true)
             }	
         
-        section(title: "Instructions") { 
+        section() { 
         	href(name: "instructions", title: "Instructions", required: false, page: "instructions", description: "how to link this app to Plex!")
     	}
-        
-    if (!state.accessToken) {
-    	createAccessToken()
-   	}
-    	
-        section(title: "Last Event") { 
-        	href(name: "usersBal", title: "Last Event", required: false, page: "lastEvt", description: "view last event recieved by app")
+        section() { 
+        	href(name: "pageDevice", title: "Create Virtual Device", required: false, page: "pageDevice", description: "create a virtual device here")
     	}
-        section(title: "Plex2SmartThings Setup Details") { 
-        	href(name: "P2STd", title: "Plex2SmartThings Setup Details", required: false, page: "P2ST", description: "information for setting up the Plex2SmartThings program if used")
-    	}
-        
-        
-        
+
+	    if (!state.accessToken) {createAccessToken()}
+
         // Enables logging debug only when enabled
-        section(title: "Debug Logging") {
+        section(title: "ADVANCED") {
        		paragraph "If you experiencing issues please enable logging to help troubleshoot"
             input "debugLogging", "bool", title: "Debug Logging...", required: false, defaultValue: false, refreshAfterSelection: true
+            href(name: "usersBal", title: "Last Event", required: false, page: "lastEvt", description: "view last event recieved by app")
+            href(name: "P2STd", title: "Plex2SmartThings Setup Details", required: false, page: "P2ST", description: "information for setting up the Plex2SmartThings program if used")
     	}
     }
 }
@@ -132,6 +132,80 @@ def instructions() {
    }
         
 }
+
+def pageDevice() {
+
+    dynamicPage(name: "pageDevice", title: "Create Device", install: false, uninstall: false) {        
+
+
+	section(title: "Some Text") {
+        
+      def childDevs = []
+      def i = 1 as int
+        
+        getChildDevices().each { dev ->
+        	href(name: "pageDevDetails$i", title:"$dev.label", description: "$dev.deviceNetworkId", params: [devi: dev.deviceNetworkId], page: "pageDevDetails", required: true, state: "complete", image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/setting_blue.png")
+            i++
+        	
+            }
+    	
+        }
+        section(){
+        	href(name: "pageDevDetails", title:"Create New Device", description: "Please ensure the custom device type is also installed", params: [devi: false], page: "pageDevDetails", required: true, state: null, image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/settings_red.png")
+    	}
+	}
+}
+
+def pageDevDetails(params) {
+    
+    dynamicPage(name: "pageDevDetails", title: "Device Details", install: false, uninstall: false) {
+		if(params.devi){
+			section("Name") {
+        		paragraph("${params.devi}")
+            }
+            section("DELETE") {
+            	href(name: "pageDevDelete", title:"DELETE DEVICE", description: "ONLY PRESS IF YOU ARE SURE!", params: [devi: "$params.devi"], page: "pageDevDelete", required: true, state: null, image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/close_red.png")
+        	}
+   		}else{
+       		section() {
+        		paragraph("Create a new Plex+ Reporting Device")
+                input "devName", type: "text", title: "Name:", required:false, submitOnChange: true, defaultValue: "New Plex Plus Device"
+            	href(name: "pageDevAdd", title:"Create Device", description: "", params: [devi: "$params.devi"], page: "pageDevAdd", required: true, state: "complete", image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/add_green.png")
+        	}
+       
+        
+        
+		}        
+   }
+        
+}
+
+
+def pageDevAdd(params) {
+	if(settings.devName){
+    	def DeviceID = "PlexPlusDev:"+settings.devName
+		def existingDevice = getChildDevice(DeviceID)
+		if(!existingDevice) {
+        	def newTrigger = addChildDevice("jebbett", "Plex Plus Device", DeviceID, null, [name: settings.devName, label: settings.devName])
+		}
+        pageDevice()
+	}else{
+    	dynamicPage(name: "pageDevAdd", title: "Device Details", install: false, uninstall: false) {        
+			section() {
+            	paragraph("Name not set")
+        	}
+		}
+	}
+}
+
+def pageDevDelete(params) {
+	settings.devices.each {
+    	deleteChildDevice(params.devi)
+	}
+	pageDevice()
+}
+
+
 
 def lastEvt() {
 
