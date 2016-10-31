@@ -34,6 +34,7 @@ import groovy.json.JsonBuilder
  *  v2.9 - Bug fix on namespace
  *  v2.10- Fixed issue with debugging not working
  *	v2.11- Added handler for creating Plex Plus Device Types
+ *	v2.12- Android fix
  *
  */
 
@@ -109,7 +110,7 @@ def mainMenu() {
         // Enables logging debug only when enabled
         section(title: "ADVANCED") {
        		paragraph "If you experiencing issues please enable logging to help troubleshoot"
-            input "debugLogging", "bool", title: "Debug Logging...", required: false, defaultValue: false, refreshAfterSelection: true
+            input "debugLogging", "bool", title: "Debug Logging...", required: false, defaultValue: false, submitOnChange: true
             href(name: "usersBal", title: "Last Event", required: false, page: "lastEvt", description: "view last event recieved by app")
             href(name: "P2STd", title: "Plex2SmartThings Setup Details", required: false, page: "P2ST", description: "information for setting up the Plex2SmartThings program if used")
     	}
@@ -133,25 +134,27 @@ def instructions() {
         
 }
 
+private getSortedDevices() {
+	return getChildDevices().sort{it.displayName}
+}
+
 def pageDevice() {
 
     dynamicPage(name: "pageDevice", title: "Create Device", install: false, uninstall: false) {        
 
 
-	section(title: "Some Text") {
+	section() {
         
       def childDevs = []
       def i = 1 as int
         
-        getChildDevices().each { dev ->
-        	href(name: "pageDevDetails$i", title:"$dev.label", description: "$dev.deviceNetworkId", params: [devi: dev.deviceNetworkId], page: "pageDevDetails", required: true, state: "complete", image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/setting_blue.png")
+        getSortedDevices().each { dev ->
+        	href(name: "pageDevDetails$i", title:"$dev.label", description: "$dev.deviceNetworkId", params: [devi: dev.deviceNetworkId, devstate: dev.statusState?.value], page: "pageDevDetails", required: false, image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/setting_blue.png")
             i++
-        	
             }
-    	
         }
         section(){
-        	href(name: "pageDevDetails", title:"Create New Device", description: "Please ensure the custom device type is also installed", params: [devi: false], page: "pageDevDetails", required: true, state: null, image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/settings_red.png")
+        	href(name: "pageDevDetails", title:"Create New Device", description: "Please ensure the custom device type is also installed", params: [devi: false], page: "pageDevDetails", required: false, image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/settings_red.png")
     	}
 	}
 }
@@ -160,17 +163,18 @@ def pageDevDetails(params) {
     
     dynamicPage(name: "pageDevDetails", title: "Device Details", install: false, uninstall: false) {
 		if(params.devi){
-			section("Name") {
+			section("Name & Status") {
         		paragraph("${params.devi}")
+                paragraph("${params.devstate}")
             }
             section("DELETE") {
-            	href(name: "pageDevDelete", title:"DELETE DEVICE", description: "ONLY PRESS IF YOU ARE SURE!", params: [devi: "$params.devi"], page: "pageDevDelete", required: true, state: null, image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/close_red.png")
+            	href(name: "pageDevDelete", title:"DELETE DEVICE", description: "ONLY PRESS IF YOU ARE SURE!", params: [devi: "$params.devi"], page: "pageDevDelete", required: false, image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/close_red.png")
         	}
    		}else{
        		section() {
         		paragraph("Create a new Plex+ Reporting Device")
                 input "devName", type: "text", title: "Name:", required:false, submitOnChange: true, defaultValue: "New Plex Plus Device"
-            	href(name: "pageDevAdd", title:"Create Device", description: "", params: [devi: "$params.devi"], page: "pageDevAdd", required: true, state: "complete", image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/add_green.png")
+            	href(name: "pageDevAdd", title:"Create Device", description: "", params: [devi: "$params.devi"], page: "pageDevAdd", required: false, image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/add_green.png")
         	}
        
         
@@ -199,9 +203,7 @@ def pageDevAdd(params) {
 }
 
 def pageDevDelete(params) {
-	settings.devices.each {
-    	deleteChildDevice(params.devi)
-	}
+    deleteChildDevice(params.devi)
 	pageDevice()
 }
 
