@@ -82,9 +82,11 @@ G. The polling interval and debugging can also be configured, however the standa
 
 ### 3. Run Plex2SmartThings
 
-You can now run Plex2SmartThings and the SmartApp should be notified whenever any media plays on plex.
+You can now run Plex2SmartThings.exe and the SmartApp should be notified whenever any media plays on plex.
 
-If anything isn’t working you can try enabling some extra debug output by adding the d1 or d2 arguments. E.g. running Plex2SmartThingsV2.exe d1 from the command line or running the supplied launchers.
+To run this on mono you will need to download mono for Mac, or for Linux install "mono-complete", the standard runtime doesn't contain everything you need.
+
+On Linux you can run "mono Plex2SmartThings.exe" or "mono Plex2SmartThings.exe &" to run in the background ("jobs" will show running instances and "kill $1" will kill process 1)
 
 
 ### 4. Configure the Smart App
