@@ -38,6 +38,7 @@
  *  v2.11- 16/10/16 - Bug fix on pause delay (was using stop delay)
  *  v2.12- 21/10/16 - Code optimisation, better app layout and support for pushing to a Plex Plus or Plex HT Device Type
  *	V2.13- 31/10/16 - Fix for android requesting required fields
+ *  V2.14- 12/11/16 - Bug fix when all sections not saved in app
  */
 
 
@@ -230,20 +231,20 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
     }
     else if (command == "onpause") {        
         logWriterChild ("->Paused")
-        if(settings?.pauseDelay != null){
-        	if(pauseDelay == "0"){PauseCommand()}else{
-            	logWriterChild ("-> Pause Action Delay")
-        		runIn(pauseDelay, PauseCommand)
-        	}
+        if(!settings?.pauseDelay || pauseDelay == "0"){
+        	PauseCommand()
+        }else{
+            logWriterChild ("-> Pause Action Delay")
+        	runIn(settings?.pauseDelay.value, PauseCommand)
     	}
     }
     else if (command == "onstop") {
         logWriterChild ("->Stopped")
-        if(settings?.stopDelay != null){
-        	if(stopDelay == "0"){StopCommand()}else{
-            	logWriterChild ("-> Stop Action Delay")
-        		runIn(stopDelay, StopCommand)
-        	}
+        if(!settings?.stopDelay || stopDelay == "0"){
+        	StopCommand()
+        }else{
+           	logWriterChild ("-> Stop Action Delay")
+        	runIn(settings?.stopDelay.value, StopCommand)
         }
     }
 }
@@ -262,7 +263,7 @@ def PlayCommand(){
 }
 
 def PauseCommand(){
-	
+	log.warn "JAKEX"
     if(settings?.pauseMode1){setLocationMode(pauseMode1)}
    	SetLevels(iLevelOnPause1, colorOnPause)
     mSwitchPause?.on()

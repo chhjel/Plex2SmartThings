@@ -61,7 +61,7 @@ iv. Get the Token and API Endpoint values via one of the below methods:
 
 **If you have chosen Plex2SmartThings EXE continue below, otherwise follow the guide provided via the link in the "Addditional Requirements" section then resume at step 4**
 
-A. Download Plex2SmartThingsV3.exe and config.config. (I have also put a ZIP file containing all of these in the same folder)
+A. Download Plex2SmartThings.exe and config.config. (I have also put a ZIP file containing all of these in the same folder)
 
 B. Open the config.config file.
 
