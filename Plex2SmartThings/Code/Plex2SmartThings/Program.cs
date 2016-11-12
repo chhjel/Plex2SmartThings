@@ -26,7 +26,7 @@ namespace Plex2SmartThings
             //TODO: move into service instead of console app?
             Console.Title = "Plex2SmartThings";
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("---Plex2SmartThings---");
+            Console.WriteLine("---Plex2SmartThings V4.0---");
 
             Console.ForegroundColor = ConsoleColor.Green;
             
@@ -42,12 +42,14 @@ namespace Plex2SmartThings
 
             StateManager = new UserStateManager();
 
-            Thread thread = new Thread(() => CheckPlexState());
-            thread.Start();
+            CheckPlexState();
+
+            //Thread thread = new Thread(() => CheckPlexState());
+            //thread.Start();
 
             Console.ReadLine();
             Terminate = true;
-            thread.Abort();
+            //thread.Abort();
 
             Console.ForegroundColor = ConsoleColor.Red;
             string terminationMessage = "\n\nTerminating Process..";

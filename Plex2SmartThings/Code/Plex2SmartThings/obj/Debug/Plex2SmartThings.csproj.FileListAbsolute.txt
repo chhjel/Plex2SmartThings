@@ -16,3 +16,9 @@ E:\System\JakeT Documents\GitHub\Plex2SmartThings\Plex2SmartThings\Code\Plex2Sma
 E:\System\JakeT Documents\GitHub\Plex2SmartThings\Plex2SmartThings\Code\Plex2SmartThings\obj\Debug\Plex2SmartThings.csprojResolveAssemblyReference.cache
 E:\System\JakeT Documents\GitHub\Plex2SmartThings\Plex2SmartThings\Code\Plex2SmartThings\obj\Debug\Plex2SmartThings.exe
 E:\System\JakeT Documents\GitHub\Plex2SmartThings\Plex2SmartThings\Code\Plex2SmartThings\obj\Debug\Plex2SmartThings.pdb
+E:\System\Desktop\Plex2SmartThings\Code\Plex2SmartThings\obj\Debug\Plex2SmartThings.exe
+E:\System\Desktop\Plex2SmartThings\Code\Plex2SmartThings\obj\Debug\Plex2SmartThings.pdb
+E:\System\Desktop\Plex2SmartThings\Code\Plex2SmartThings\bin\Debug\config.config
+E:\System\Desktop\Plex2SmartThings\Code\Plex2SmartThings\bin\Debug\Plex2SmartThings.exe
+E:\System\Desktop\Plex2SmartThings\Code\Plex2SmartThings\bin\Debug\Plex2SmartThings.pdb
+E:\System\Desktop\Plex2SmartThings\Code\Plex2SmartThings\obj\Debug\Plex2SmartThings.csprojResolveAssemblyReference.cache
