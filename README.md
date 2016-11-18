@@ -33,28 +33,20 @@ A. Go to your IDE location, the below link should re-direct you to the correct I
 
 https://graph.api.smartthings.com/ide/apps 
 
-B. Select “From Code” for each of the below:
+B. Select “From Code” 
 
-#### Parent App:
+C. Paste App source code with the code from the file PlexPlus.groovy.
 
-i. Paste App source code with the code from the file SmartApp_Source.groovy.txt.
+D. Save and publish the app for yourself.
 
-ii. Save and publish the app for yourself.
+E. Enable OAuth in IDE by going in to IDE > My Smart Apps > Plex Plus > App Settings > Enable OAuth.
 
-iii. Enable OAuth in IDE by going in to IDE > My Smart Apps > Plex Plus > App Settings > Enable OAuth.
-
-iv. Get the Token and API Endpoint values via one of the below methods:
+F. Get the Token and API Endpoint values via one of the below methods:
 
 * Open the PlexPlus smart app and click API Information for your region, you can then send it to your computer via email from the app.
 * Enable debugging, open live logging in IDE and then open the app again and press done and values will be returned in Live Logging.
 * If the above does not work (usually as ST have introduced a new region) then you can just get the App ID and Token from the "Last Event / App ID / Token" screen, but you will manually need to write this down. 
 * Configure the app online and note down the API Token and API Endpoint values.
-
-#### Child App:
-
- i. Paste App source code with the code from the file SmartApp_Child_Source.groovy.txt.
-
- ii. Save the App – DO NOT PUBLISH!
 
 
 ### 2. Configure Your Chosen Polling Method (Choices detailled in "Additional Requirements section")

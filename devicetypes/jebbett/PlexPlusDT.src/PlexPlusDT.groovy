@@ -1,7 +1,7 @@
 /**
  *  Plex Plus Device
  *
- *  Copyright 2016 Jake Tebbett
+ *  Copyright 2016 Jake Tebbett (jebbett)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -20,13 +20,12 @@ metadata {
 	capability "musicPlayer"
     command "playbackType", ["string"]
 }
-
 	tiles(scale: 2) {
-        multiAttributeTile(name:"status", type: "generic", width: 6, height: 4, canChangeIcon: true){
+        multiAttributeTile(name:"status", type: "generic", width: 6, height: 4, canChangeIcon: false){
             tileAttribute ("device.status", key: "PRIMARY_CONTROL") {
-            attributeState "playing", label:'Playing', action:"music Player.pause", icon:"st.Electronics.electronics16", backgroundColor:"#79b821"
-            attributeState "stopped", label:'Stopped', action:"music Player.play", icon:"st.Electronics.electronics16", backgroundColor:"#ffffff"
-            attributeState "paused", label:'Paused', action:"music Player.play", icon:"st.Electronics.electronics16", backgroundColor:"#FFA500"
+            attributeState "playing", label:'Playing', icon:"st.Electronics.electronics16", backgroundColor:"#79b821"
+            attributeState "stopped", label:'Stopped', icon:"st.Electronics.electronics16", backgroundColor:"#ffffff"
+            attributeState "paused", label:'Paused', icon:"st.Electronics.electronics16", backgroundColor:"#FFA500"
         }        
             tileAttribute ("device.playbackType", key: "SECONDARY_CONTROL") {
                 attributeState "playbackType", label:'${currentValue}'
@@ -39,18 +38,15 @@ def playbackType(type) {
 	sendEvent(name: "playbackType", value: type);
 }
 
-def play() {
-	log.debug "Executing 'play'"	        
+def play() {	        
     sendEvent(name: "status", value: "playing");
 }
 
 def pause() {
-	log.debug "Executing 'pause'"
     sendEvent(name: "status", value: "paused");
 }
 
 def stop() {
-	log.debug "Executing 'stop'"
     sendEvent(name: "status", value: "stopped");
     
 }
