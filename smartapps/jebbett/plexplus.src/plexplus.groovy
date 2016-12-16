@@ -35,12 +35,10 @@ definition(
 
 
 def installed() {
-    log.debug "Installed with settings: ${settings}"
     initialize()
 }
 
 def updated() {
-    log.debug "Updated with settings: ${settings}"
     unsubscribe()
     initialize()
 }
@@ -49,14 +47,13 @@ def initialize() {
 	if(parent){
        	state.catcherRunning = false
     	subscribe(playerDT, "status", PlayerDTCommandRecieved)
+        logWriter("App settings: ${settings}\nLast Event:\n${parent.state.lastEvent}")
     }else{
         if (!state.accessToken) {
             createAccessToken()
         }
-        
         logWriter("APP_ID: $app.id")
         logWriter("ACCESS_TOKEN: $state.accessToken")
-        
         if(state.lastEvent == null){state.lastEvent = "No event recieved, please ensure that config.config is setup correctly"}
 	}
 }
@@ -392,7 +389,7 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
 
 //Log last event
 	parent.StoreLastEvent(command, userName, playerName, playerIP, mediaType)
-	logWriter("JAKE")
+	
 //Check if room found
 	def allowedDevs = ["*", "$playerIP", "$playerName", "$userName"]
     
