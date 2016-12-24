@@ -28,9 +28,9 @@ definition(
     description: "Allows web requests to dim/turn off/on lights when plex is playing",
     category: "My Apps",
     parent: parent ? "jebbett:PlexPlus" : null,
-    iconUrl: "https://raw.githubusercontent.com/jebbett/Plex2SmartThings/PlexPlus/icon.png",
-    iconX2Url: "https://raw.githubusercontent.com/jebbett/Plex2SmartThings/PlexPlus/icon.png",
-    iconX3Url: "https://raw.githubusercontent.com/jebbett/Plex2SmartThings/PlexPlus/icon.png",
+    iconUrl: "https://github.com/jebbett/Plex2SmartThings/raw/PlexPlus/icon.png",
+    iconX2Url: "https://github.com/jebbett/Plex2SmartThings/raw/PlexPlus/icon.png",
+    iconX3Url: "https://github.com/jebbett/Plex2SmartThings/raw/PlexPlus/icon.png",
     oauth: [displayName: "PlexServer", displayLink: ""])
 
 
