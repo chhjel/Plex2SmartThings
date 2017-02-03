@@ -17,7 +17,8 @@ import groovy.json.JsonBuilder
  * VERSION CONTROL - Plex Plus
  * ###############
  *
- *  v3.00 - Combined everything in to a single app, old app will need to be removed and re-installed.
+ *  v3.0 - Combined everything in to a single app, old app will need to be removed and re-installed.
+ *	v3.1 - Added support for Plex Webhook (Plex Pass users only)
  *
  */
 
@@ -54,6 +55,7 @@ def initialize() {
         }
         logWriter("APP_ID: $app.id")
         logWriter("ACCESS_TOKEN: $state.accessToken")
+        logWriter("URL FOR USE IN PLEX WEBHOOK:\n${getApiServerUrl()}/api/smartapps/installations/${app.id}/pwh?access_token=${state.accessToken}")
         if(state.lastEvent == null){state.lastEvent = "No event recieved, please ensure that config.config is setup correctly"}
 	}
 }
@@ -74,6 +76,14 @@ preferences {
     page name: "pageDoThis"
     page name: "pageWhenThis"
     page name: "pageMediaSettings"
+}
+
+mappings {
+  path("/statechanged/:command") 	{ action: [ GET: "OnCommandRecieved" ] }
+  path("/appinfo") 					{ action: [ GET: "appInfoJson"]   }
+  path("/appinfo2") 				{ action: [ GET: "appInfoJson2"]   }
+  path("/appinfo3") 				{ action: [ GET: "appInfoJson3"]   }
+  path("/pwh") 						{ action: [ POST: "plexWebHookHandler"] }
 }
 
 def mainMenu() {
@@ -268,12 +278,7 @@ def appInfoJson3() {
     render contentType: "text/plain", data: configString
 }
 
-mappings {
-  path("/statechanged/:command") 	{ action: [ GET: "OnCommandRecieved" ] }
-  path("/appinfo") 					{ action: [ GET: "appInfoJson"]   }
-  path("/appinfo2") 				{ action: [ GET: "appInfoJson2"]   }
-  path("/appinfo3") 				{ action: [ GET: "appInfoJson3"]   }
-}
+
 
 def OnCommandRecieved() {
 	def command = params.command
@@ -385,6 +390,33 @@ def PlayerDTCommandRecieved(evt){
     else if(evt.value=="paused"){AppCommandRecieved("onpause", "Unknown", playerDT,"ST Media Player Device", playerDT.currentplaybackType)}
 }
 
+def plexWebHookHandler(){    
+    def jsonSlurper = new groovy.json.JsonSlurper()
+	def plexJSON = jsonSlurper.parseText(params.payload)
+    
+    logWriter "Player JSON: ${plexJSON.Player}"
+    logWriter "Account JSON: ${plexJSON.Account}"
+    logWriter "Account JSON: ${plexJSON.Account}"
+    
+    def command = ""
+	def userName = plexJSON.Account.title
+	def playerName = plexJSON.Player.title
+    def playerIP = plexJSON.Player.publicAddress
+	def mediaType = plexJSON.Metadata.type
+    // change command to right format
+    switch(plexJSON.event) {
+		case ["media.play","media.resume"]:		command = "onplay"; 	break;
+        case "media.pause":						command = "onpause"; 	break;
+        case "media.stop":						command = "onstop"; 	break;
+        return
+    }
+    // send to child apps
+    childApps.each { child ->
+    	child.AppCommandRecieved(command, userName, playerName, playerIP, mediaType)
+    }
+
+}
+
 def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
 
 //Log last event
@@ -418,7 +450,7 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
 // Send media type to Plex Plus Device Type if configured.
 	try { settings.PlexPlusDT?.playbackType("${mediaType}") }
 	catch (Exception e) {log.info "Playback Type Not Supported: $e"}
-
+	log.warn "COMMAND IS $command"
 // Play, Pause or Stop
     if (command == "onplay") {
     	logWriter ("Playing")
