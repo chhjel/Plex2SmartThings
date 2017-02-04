@@ -19,7 +19,7 @@ import groovy.json.JsonBuilder
  *
  *  v3.0 - Combined everything in to a single app, old app will need to be removed and re-installed.
  *	v3.1 - Added support for Plex Webhook (Plex Pass users only)
- *
+ *	v3.2 - Updated Live Logging, Cosmetics for WebHook and addition of matching 2 criteria.
  */
 
 definition(
@@ -53,8 +53,13 @@ def initialize() {
         if (!state.accessToken) {
             createAccessToken()
         }
-        logWriter("APP_ID: $app.id")
-        logWriter("ACCESS_TOKEN: $state.accessToken")
+        
+        logWriter("URL FOR USE IN PLEX WEBHOOK:\n"+
+        		"<!ENTITY accessToken '${state.accessToken}'>\n"+
+				"<!ENTITY appId '${app.id}'>\n"+
+				"<!ENTITY ide '${getApiServerUrl()}'>\n"+
+				"<!ENTITY plexStatusUrl 'http://localhost:32400/status/sessions?X-Plex-Token=INSERTTOKENHERE'>")
+        
         logWriter("URL FOR USE IN PLEX WEBHOOK:\n${getApiServerUrl()}/api/smartapps/installations/${app.id}/pwh?access_token=${state.accessToken}")
         if(state.lastEvent == null){state.lastEvent = "No event recieved, please ensure that config.config is setup correctly"}
 	}
@@ -135,15 +140,15 @@ def childPage() {
 def instructions() {
     dynamicPage(name: "instructions", title: "Instructions", install: false, uninstall: false) {        
         section(title: "Choose a method of linking to Plex") {
-        	paragraph "There are currently two methods of linking Plex to SmartThings"
+        	paragraph "There are currently three methods of linking Plex to SmartThings"
         }
         
         section(title: "1. Plex2SmartThings program on your Plex server")
-        section(title: "This is the preferred method if your Plex server runs on a windows computer, as most of the work is done by a program that runs on the server and avoids reliance of ST to constantly monitor your plex server, however does require some minor technical ability. This is using the windows application created by ChristianH and modified by EntityXenon"){
-        }
-        section(title: "2. Custom Device Type for Plex")
-        section(title: "This is the only method if your Plex server is not running on a windows computer as works with all variants of Plex Server, but does rely on SmartThings checking the Plex status every 10 seconds. This is using the Device Handler and smart app created by iBeech."){
-        }
+        section(title: "This is the preferred method if your Plex server runs on a windows computer, as most of the work is done by a program that runs on the server and avoids reliance of ST to constantly monitor your plex server, however does require some minor technical ability. This is using the windows application created by ChristianH and modified by EntityXenon")
+        section(title: "2. Plex WebHook (Plex Pass Only)")
+        section(title: "If you have plex pass then this is the recommended method, you will need to get the webhook URL from live logging, and set this up in your plex server.")
+        section(title: "3. Custom Device Type for Plex")
+        section(title: "This is the only method if your Plex server is not running on a windows computer as works with all variants of Plex Server, but does rely on SmartThings checking the Plex status every 10 seconds. This is using the Device Handler and smart app created by iBeech.")
    }
 }
 
@@ -308,10 +313,11 @@ def StoreLastEvent(command, userName, playerName, playerIP, mediaType) {
 
 def pageWhenThis(){
 	dynamicPage(name: "pageWhenThis", uninstall: false) {
-    	section("When Plex2SmartThings sends and event matching:") {
+    	section("When Plex2SmartThings or Plex WebHook sends and event matching:") {
             input(name: "playerA1", type: "text", title: "Player name, User or IP", required:false)
-            input(name: "playerB1", type: "text", title: "Player name, User or IP (alternative)", required:false)
-            paragraph "The above are case sensitive"
+            input(name: "playerB1", type: "text", title: "Player name, User or IP 2", required:false)
+            input(name: "matchBoth", type: "bool", title: "Trigger only if both the above are found", required: false)
+            paragraph "The above are case sensitive, and IP can't be used for Plex WebHook"
         }
         section("Or when a media player device changes state:") {
             input(name: "playerDT", type: "capability.musicPlayer", title: "ST Media Player Device", multiple: false, required:false)
@@ -425,8 +431,9 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
 //Check if room found
 	def allowedDevs = ["*", "$playerIP", "$playerName", "$userName"]
     
-    if (allowedDevs.contains("${playerA1}")){logWriter ("Player 1 Match")}
-    else if (allowedDevs.contains("${playerB1}")){logWriter ("Player 2 Match")}
+    if (allowedDevs.contains("${playerA1}") && !matchBoth){logWriter ("Player 1 Match")}
+    else if (allowedDevs.contains("${playerB1}") && !matchBoth){logWriter ("Player 2 Match")}
+    else if (matchBoth && allowedDevs.contains("${playerA1}") && allowedDevs.contains("${playerB1}")){logWriter ("Player Combination Match")}
     else if ("$playerIP" == "ST Media Player Device"){logWriter ("ST Device Type Match")}
     else{logWriter ("No match found for room"); return}
     
@@ -450,7 +457,6 @@ def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
 // Send media type to Plex Plus Device Type if configured.
 	try { settings.PlexPlusDT?.playbackType("${mediaType}") }
 	catch (Exception e) {log.info "Playback Type Not Supported: $e"}
-	log.warn "COMMAND IS $command"
 // Play, Pause or Stop
     if (command == "onplay") {
     	logWriter ("Playing")
