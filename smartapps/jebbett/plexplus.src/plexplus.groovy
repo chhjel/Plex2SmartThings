@@ -20,6 +20,8 @@ import groovy.json.JsonBuilder
  *  v3.0 - Combined everything in to a single app, old app will need to be removed and re-installed.
  *	v3.1 - Added support for Plex Webhook (Plex Pass users only)
  *	v3.2 - Updated Live Logging, Cosmetics for WebHook and addition of matching 2 criteria.
+ *	v3.3 - Added bulb temperature for color bulbs
+ *
  */
 
 definition(
@@ -345,6 +347,9 @@ def pageDoThis(){
 					options: ["Soft White", "White", "Daylight", "Warm White", "Red", "Green", "Blue", "Yellow", "Orange", "Purple", "Pink"]
                 input "colorOnStop", "enum", title: "Hue Bulbs > Color On Stop", required: false, multiple: false, submitOnChange: true,
 					options: ["Soft White", "White", "Daylight", "Warm White", "Red", "Green", "Blue", "Yellow", "Orange", "Purple", "Pink"]
+                input(name: "tempOnPlay", description: "1000..9999", type: "number", range: "1000..9999", title: "Color Temperature on Play (°K)", required: false)
+                input(name: "tempOnPause", description: "1000..9999", type: "number", range: "1000..9999", title: "Color Temperature on Pause (°K)", required: false)
+                input(name: "tempOnStop", description: "1000..9999", type: "number", range: "1000..9999", title: "Color Temperature on Stop (°K)", required: false)
             }
             input(name: "bDimOnlyIfOn1", type: "bool", title: "Dim bulbs only if they're already on", required: false)
         }
@@ -400,9 +405,10 @@ def plexWebHookHandler(){
     def jsonSlurper = new groovy.json.JsonSlurper()
 	def plexJSON = jsonSlurper.parseText(params.payload)
     
+    //logWriter "Player JSON: ${plexJSON.Metadata}"
     logWriter "Player JSON: ${plexJSON.Player}"
     logWriter "Account JSON: ${plexJSON.Account}"
-    logWriter "Account JSON: ${plexJSON.Account}"
+    logWriter "Account JSON: ${plexJSON.event}"
     
     def command = ""
 	def userName = plexJSON.Account.title
@@ -489,7 +495,7 @@ def PlayCommand(){
         state.catcherRunning = true
     }
     if(settings?.playMode1){setLocationMode(playMode1)}
-	SetLevels(iLevelOnPlay1, colorOnPlay)
+	SetLevels(iLevelOnPlay1, colorOnPlay, tempOnPlay)
     SetSwitchesOff()
     mSwitchPlay?.on()
     PlexPlusDT?.play()
@@ -497,7 +503,7 @@ def PlayCommand(){
 
 def PauseCommand(){
     if(settings?.pauseMode1){setLocationMode(pauseMode1)}
-   	SetLevels(iLevelOnPause1, colorOnPause)
+   	SetLevels(iLevelOnPause1, colorOnPause, tempOnPause)
     mSwitchPause?.on()
     PlexPlusDT?.pause()
     if(settings?.bSwitchOffOnPause1) {
@@ -518,7 +524,7 @@ def PauseCommand(){
 def StopCommand(){
 
 	if(settings?.stopMode1){setLocationMode(settings?.stopMode1)}
-    SetLevels(iLevelOnStop1, colorOnStop)
+    SetLevels(iLevelOnStop1, colorOnStop, tempOnStop)
     mSwitchStop?.on()
     if(state.catcherRunning && settings?.bReturnState1){
        	returnToState("switches1")
@@ -542,9 +548,9 @@ def SetSwitchesOff() {
     switches2?.on()
 }
 
-def SetLevels(level, acolor) {
+def SetLevels(level, acolor, temp) {
 	// If color specified set hues
-    if (level != null) {        
+    if (level != null) {
     	def hueColor = 23
 		def saturation = 56
 		switch(acolor) {
@@ -588,11 +594,18 @@ def SetLevels(level, acolor) {
 		}
         
         if (settings?.bDimOnlyIfOn1){
-        	hues1?.each { hue -> if ("on" == hue.currentSwitch) {hue.setColor([hue: hueColor, saturation: saturation, level: level])}}
-        	dimmers1?.each { bulb -> if ("on" == bulb.currentSwitch) {bulb.setLevel(level)}}
+        	if(acolor != null){ 	hues1?.each 	{ hue -> if ("on" == hue.currentSwitch) 	{ hue.setColor([hue: hueColor, saturation: saturation, level: level]) } } }
+            else if(temp != null){ 	hues1?.each 	{ hue -> if ("on" == hue.currentSwitch) 	{ hue.setColorTemperature(temp) } } }
+            else {					hues1?.each 	{ hue -> if ("on" == hue.currentSwitch) 	{ hue.setLevel(level) } } }
+            
+        							dimmers1?.each 	{ bulb -> if ("on" == bulb.currentSwitch) 	{ bulb.setLevel(level) } }
+            
         }else{
-        	hues1?.setColor([hue: hueColor, saturation: saturation, level: level])
-            dimmers1?.setLevel(level)
+        	// color takes priority over temperature, dimmers will still set temperature if available
+        	if(acolor != null){		hues1?.setColor([hue: hueColor, saturation: saturation, level: level]) }
+            else if(temp != null){	hues1?.setColorTemperature(temp) }
+
+            						dimmers1?.setLevel(level)
         }
 	}
 }
