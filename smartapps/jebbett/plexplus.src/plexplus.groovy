@@ -21,6 +21,7 @@ import groovy.json.JsonBuilder
  *	v3.1 - Added support for Plex Webhook (Plex Pass users only)
  *	v3.2 - Updated Live Logging, Cosmetics for WebHook and addition of matching 2 criteria.
  *	v3.3 - Added bulb temperature for color bulbs
+ *	v3.4 - Added control for switches to only react to 'Play' and added Routine triggers
  *
  */
 
@@ -358,6 +359,7 @@ def pageDoThis(){
             input "switches1", "capability.switch", title:"Switches Off when Playing", multiple: true, required: false
             input(name: "bReturnState1", type: "bool", title: "Switches return to original state when Stopped", required: false)
             input(name: "bSwitchOffOnPause1", type: "bool", title: "Switches use Play config when Paused", required: false)
+            input(name: "switchOnPlay", type: "bool", title: "Switches only change on 'Play'", required: false)
             paragraph "The below switches do not toggle off when state becomes inactive, ideal for tiggering external App scenes"
             input "mSwitchPlay", "capability.switch", title:"Momentary switch on Play", multiple: true, required: false
             input "mSwitchPause", "capability.switch", title:"Momentary switch on Pause", multiple: true, required: false
@@ -369,6 +371,12 @@ def pageDoThis(){
 			input "pauseMode1", "mode", title: "Mode when paused", required:false
 			input "stopMode1", "mode", title: "Mode when stopped", required:false
 		}
+        section("Routines") {
+        	def actions = location.helloHome?.getPhrases()*.label
+        	input "playRoutine", "enum", title: "Routine when playing", required: false, options: actions
+            input "pauseRoutine", "enum", title: "Routine when paused", required: false, options: actions
+            input "stopRoutine", "enum", title: "Routine when stopped", required: false, options: actions
+        }
         section("Update This Device"){
         	input(name: "PlexPlusDT", type: "capability.musicPlayer", title: "Update This Device", description: "Use a Plex Plus or HT Custom Device", multiple: false, state: null, required:false)
         }
@@ -499,6 +507,7 @@ def PlayCommand(){
     SetSwitchesOff()
     mSwitchPlay?.on()
     PlexPlusDT?.play()
+    if(playRoutine) { location.helloHome?.execute(playRoutine) }
 }
 
 def PauseCommand(){
@@ -506,6 +515,7 @@ def PauseCommand(){
    	SetLevels(iLevelOnPause1, colorOnPause, tempOnPause)
     mSwitchPause?.on()
     PlexPlusDT?.pause()
+    if(pauseRoutine) { location.helloHome?.execute(pauseRoutine) }
     if(settings?.bSwitchOffOnPause1) {
    		SetSwitchesOff()
     } else {
@@ -526,6 +536,8 @@ def StopCommand(){
 	if(settings?.stopMode1){setLocationMode(settings?.stopMode1)}
     SetLevels(iLevelOnStop1, colorOnStop, tempOnStop)
     mSwitchStop?.on()
+    PlexPlusDT?.stop()
+    if(stopRoutine) { location.helloHome?.execute(stopRoutine) }
     if(state.catcherRunning && settings?.bReturnState1){
        	returnToState("switches1")
     	returnToState("switches2")
@@ -534,14 +546,14 @@ def StopCommand(){
        	SetSwitchesOn()
         state.catcherRunning = false
     }
-    PlexPlusDT?.stop()
 }
-
 
 // Actions
 def SetSwitchesOn() {
-	switches1?.on()
-    switches2?.off()
+	if(!switchOnPlay){
+		switches1?.on()
+    	switches2?.off()
+    }
 }
 def SetSwitchesOff() {
 	switches1?.off()
@@ -623,6 +635,7 @@ private returnToState(switches) {
         if(state."${switcher.id}State" == "off") {switcher.off()}
     }
 }
+
 
 //// GENERIC CODE
 
