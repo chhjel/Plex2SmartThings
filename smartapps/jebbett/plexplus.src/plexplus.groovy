@@ -22,6 +22,7 @@ import groovy.json.JsonBuilder
  *	v3.2 - Updated Live Logging, Cosmetics for WebHook and addition of matching 2 criteria.
  *	v3.3 - Added bulb temperature for color bulbs
  *	v3.4 - Added control for switches to only react to 'Play' and added Routine triggers
+ *	v3.5 - Added scrobble as onplay
  *
  */
 
@@ -425,7 +426,7 @@ def plexWebHookHandler(){
 	def mediaType = plexJSON.Metadata.type
     // change command to right format
     switch(plexJSON.event) {
-		case ["media.play","media.resume"]:		command = "onplay"; 	break;
+		case ["media.play","media.resume","media.scrobble"]:		command = "onplay"; 	break;
         case "media.pause":						command = "onpause"; 	break;
         case "media.stop":						command = "onstop"; 	break;
         return
@@ -438,7 +439,7 @@ def plexWebHookHandler(){
 }
 
 def AppCommandRecieved(command, userName, playerName, playerIP, mediaType) {
-
+log.warn "THIS IS THE MEDIA TYPE: $mediaType COMMAND: $command"
 //Log last event
 	parent.StoreLastEvent(command, userName, playerName, playerIP, mediaType)
 	
