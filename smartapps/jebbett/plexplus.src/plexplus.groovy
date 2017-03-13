@@ -23,6 +23,7 @@ import groovy.json.JsonBuilder
  *	v3.3 - Added bulb temperature for color bulbs
  *	v3.4 - Added control for switches to only react to 'Play' and added Routine triggers
  *	v3.5 - Added scrobble as onplay
+ *	v3.6 - Added error handling for token creation
  *
  */
 
@@ -58,7 +59,7 @@ def initialize() {
             createAccessToken()
         }
         
-        logWriter("URL FOR USE IN PLEX WEBHOOK:\n"+
+        logWriter("URL FOR USE IN PLEX2SMARTTHINGS EXE:\n"+
         		"<!ENTITY accessToken '${state.accessToken}'>\n"+
 				"<!ENTITY appId '${app.id}'>\n"+
 				"<!ENTITY ide '${getApiServerUrl()}'>\n"+
@@ -113,8 +114,10 @@ def parentPage() {
         section() { 
         	href(name: "pageDevice", title: "Create Virtual Device", required: false, page: "pageDevice", description: "create a virtual device here")
     	}
-
-	    if (!state.accessToken) {createAccessToken()}
+		
+        try { if (!state.accessToken) {createAccessToken()} }
+		catch (Exception e) {log.info "Unable to create access token, OAuth has probably not been enabled: $e"}
+	    
 
         // Enables logging debug only when enabled
         section(title: "ADVANCED") {
