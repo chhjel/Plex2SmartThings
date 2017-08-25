@@ -24,6 +24,7 @@ import groovy.json.JsonBuilder
  *	v3.4 - Added control for switches to only react to 'Play' and added Routine triggers
  *	v3.5 - Added scrobble as onplay
  *	v3.6 - Added error handling for token creation
+ *	v3.7 - Fixed the use of wildcards
  *
  */
 
@@ -447,9 +448,12 @@ log.warn "THIS IS THE MEDIA TYPE: $mediaType COMMAND: $command"
 	parent.StoreLastEvent(command, userName, playerName, playerIP, mediaType)
 	
 //Check if room found
-	def allowedDevs = ["*", "$playerIP", "$playerName", "$userName"]
+	def allowedDevs = ["$playerIP", "$playerName", "$userName"]
     
-    if (allowedDevs.contains("${playerA1}") && !matchBoth){logWriter ("Player 1 Match")}
+    log.debug "$settings.playerA1 is not in $allowedDevs"
+    
+    if (settings?.playerA1 == "*"){logWriter ("Player 1 Wildcard Match")}
+    else if (allowedDevs.contains("${playerA1}") && !matchBoth){logWriter ("Player 1 Match")}
     else if (allowedDevs.contains("${playerB1}") && !matchBoth){logWriter ("Player 2 Match")}
     else if (matchBoth && allowedDevs.contains("${playerA1}") && allowedDevs.contains("${playerB1}")){logWriter ("Player Combination Match")}
     else if ("$playerIP" == "ST Media Player Device"){logWriter ("ST Device Type Match")}
