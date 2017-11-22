@@ -1,43 +1,106 @@
-# Plex2SmartThings
-Integration from Plex to SmartThings, notifying a smartapp when media starts playing (or pauses/stops) on Plex.
+# PlexPlus (with Plex2SmartThings)
 
-## Requirements
+**Using either a Windows EXE or a Plex custom device type to translate status changes in Plex Media Server and passing these status changes to the Plex Plus SmartThings App to control lighting and switches. Different statuses include Play, Pause, Stop & Trailer**
 
-- [SmartThings](http://www.smartthings.com/) home automation system.
-- [Plex Media Server](https://plex.tv/)
+**Note:** This is a modified version of @ChristianH’s Excellent Plex2SmartThings exe. 
 
-## How to install it
+**Code and Program Location:**
+https://github.com/jebbett/Plex2SmartThings/tree/PlexPlus
+
+**PlexPlus adds:**
+- Child apps for each room to allow as many rooms / scenes as required.
+- This also allows matching multiple “rooms” from a single player for more complex lighting requirements.
+- Additional functionality from v1.4.1, including a disable switch check and momentary switches.
+- Compatibility for US and EU, and updates to make setup easier.
+- Setting up devices against IP address, rather than limited to name.
+- Support for media player device type.
+- All further changes are documented in the respective Smart Apps version history.
+
+## Additional Requirements
+
+Either:
+
+**- Plex2SmartThings** - Windows Application - This is the most reliable method at the moment due to ST reliability issues and also should be able to handle any client and can select based on many variables. A computer will need to run a program to poll Plex, so will need to be switched on when you are using Plex for this to work (This does not need to be on the same computer as the Plex server)
+**- Plex HT Manager** - Non Windows / NAS etc. - This is an app and custom device type, which uses ST to poll Plex every 10 seconds, as such is subject to ST reliability issues, but offers greater server support and easier to setup - https://community.smartthings.com/t/release-plex-home-theatre-manager-smartapp/37415
+
+**- Plex Plus Device Type (Optional)** - Now you can install this device type under "My Device Handlers" and then create new devices in the Smart App then associate the device under the "Trigger These Actions" section. This allows you to interface with other applications such as Core and Rule Machine.
+
+## How To Install:
 
 ### 1. Create the SmartApp
 
-1. Go to https://graph.api.smartthings.com/ide/apps and create a new SmartApp.
+A. Go to your IDE location, the below link should re-direct you to the correct IDE location.
 
-2. Fill out the required fields.
+https://graph.api.smartthings.com/ide/apps 
 
-3. Replace the generated app source code with the code from the file SmartApp_Source.groovy.txt.
+B. Select “From Code” 
 
-4. Save and publish the app for yourself.
+C. Paste App source code with the code from the file PlexPlus.groovy.
 
-5. Either configure the app online and note down the API Token and API Endpoint values, or install the app through the SmartThings app and click Api Information to find the token and endpoints.
-![](https://lh6.googleusercontent.com/IkYz19RC2T47L9kIaROifhE9-U1qY1dUKfvIpfSSZmph8kW-UAYnhDA_3TcYKXZ74PuCu8fqAAjusHkDFoxNSjSscsoFL2QPYJTGIh4UUNOLh6_vJzxY3kU9mCc8qid4VaVoXXk?raw=true)
+D. Save and publish the app for yourself.
 
-### 2. Configure the Plex2SmartThings application
+E. Enable OAuth in IDE by going in to IDE > My Smart Apps > Plex Plus > App Settings > Enable OAuth.
 
-1. Compile the Plex2SmartThings application.
+F. Get the Token and API Endpoint values via one of the below methods:
 
-2. Open the config.config file.
+* Open the PlexPlus smart app and click API Information for your region, you can then send it to your computer via email from the app.
+* Enable debugging, open live logging in IDE and then open the app again and press done and values will be returned in Live Logging.
+* If the above does not work (usually as ST have introduced a new region) then you can just get the App ID and Token from the "Last Event / App ID / Token" screen, but you will manually need to write this down. 
+* Configure the app online and note down the API Token and API Endpoint values.
 
-3. In config/smartThingsEndpoints fill in your API token and endpoint urls. Be sure to keep the /statechanged/on* at the end of the urls.
 
-4. If plex and this application is not running on the same server then enter the url to the session status page of your plex server in the config/plexCheck/@plexStatusUrl attribute.
+### 2. Configure Your Chosen Polling Method (Choices detailled in "Additional Requirements section")
 
-5. If you have Plex Pass users with PINs be sure to append your plex_token to the end of the url in the step above. (e.g. http://localhost:32400/status/sessions?X-Plex-Token='myPlexToken'). To find your plex token follow [this guide.](https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token)
+**If you have chosen Plex2SmartThings EXE continue below, otherwise follow the guide provided via the link in the "Addditional Requirements" section then resume at step 4**
 
-6. Configure the rest of the file to your likings.
+A. Download Plex2SmartThings.exe and config.config. (I have also put a ZIP file containing all of these in the same folder)
+
+B. Open the config.config file.
+
+C. In config/smartThingsEndpoints fill in your API token and add the APP ID to the endpoint urls from the previous section.
+
+    <!ENTITY accessToken "123-123-123">
+    <!ENTITY appId "abc-abc-abc">
+    <!ENTITY ide "https://graph-eu01-euwest1.api.smartthings.com">
+    <!ENTITY plexStatusUrl "http://localhost:32400/status/sessions">
+
+D. Be sure to also check that your IDE URL matches the URL in config.config, if you have the URL from the app then this should be correct, if you were unable to get this from the app then you willl need to copy from IDE, it'll be somethign like "graph-na02-useast1.api.smartthings.com"
+  
+E. If Plex and this application is not running on the same server then enter the URL to the session status page of your Plex server in the plexStatusUrl attribute.
+
+F. If you have Plex Pass users with PINs be sure to append your plex_token to the end of the url in the step above. (e.g. http://localhost:32400/status/sessions?X-Plex-Token='MYPLEXTOKEN'). To find your plex token follow [this guide.](https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token)
+
+G. The polling interval and debugging can also be configured, however the standard value should suffice.
 
 ### 3. Run Plex2SmartThings
 
-You can now run Plex2SmartThings and the SmartApp should be notified whenever any media plays on plex.
+You can now run Plex2SmartThings.exe and the SmartApp should be notified whenever any media plays on plex.
 
-If anything isn’t working you can try enabling some extra debug output by adding the d1 or d2 arguments. E.g. running Plex2SmartThings.exe d1 from the command line.
+To run this on mono you will need to download mono for Mac, or for Linux install "mono-complete", the standard runtime doesn't contain everything you need.
 
+On Linux you can run "mono Plex2SmartThings.exe" or "mono Plex2SmartThings.exe &" to run in the background ("jobs" will show running instances and "kill $1" will kill process 1)
+
+
+### 4. Configure the Smart App
+
+Configuration should be self explanatory however come back here with any questions.
+
+If using Plex2SmartThings EXE you will need to populate "Player name, User or IP" If you require device details from  then the App has a section called "Last Event" which will tell you the details of the last event recieved.
+
+
+### 5. Errors / Debugging
+
+**Plex2SmartThings.exe - SendGetRequest: the remote server returned and error: (403) Forbidden**
+There is an issue with the URL in config.config re-check section 2.D
+
+**No error in the EXE and no "Last Event" present in the App**
+This is because SmartThings is not reciving an event, this is usually because the App ID or Token are incorrect, if you re-install the app these values will change and need to be setup again.
+
+**"Last Event" in the app, but hasn't triggered the lights to change.**
+This is likely to that the "Room" is not configured correctly, re-check the name or IP you have setup
+
+**Live Logging - java.lang.NullPointerException: Cannot get property 'authorities' on null object @ line xx**
+You have not enabled OAuth in the parent app, go to Section 1.B.iii 
+
+**I've played a video via Plex but no "Last Event" is showing**
+If the event is not appearing here then the config.config is not setup correctly and you will need to revisit step 2.

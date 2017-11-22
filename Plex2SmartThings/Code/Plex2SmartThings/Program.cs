@@ -21,36 +21,35 @@ namespace Plex2SmartThings
 
         static void Main(string[] args)
         {
-            //Set debug level
-            if (Debugger.IsAttached) DebugLevel = 1;
-            else if (args.Length > 0)
-            {
-                if (args[0].Trim() == "d1") DebugLevel = 1;
-                else if (args[0].Trim() == "d2") DebugLevel = 2;
-            }
+            
 
             //TODO: move into service instead of console app?
             Console.Title = "Plex2SmartThings";
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("---Plex2SmartThings---");
+            Console.WriteLine("---Plex2SmartThings V4.0---");
 
             Console.ForegroundColor = ConsoleColor.Green;
-            if (DebugLevel > 0) Console.WriteLine("-DebugLevel is set to " + DebugLevel);
-
+            
             Console.WriteLine("-Loading config..");
             if (!Config.TryLoad()) return;
             Console.WriteLine(" >Loaded");
+
+            //Set debug level
+            DebugLevel = Config.ConsoleDebugLevel;
+            Console.WriteLine("-DebugLevel is set to " + DebugLevel);
 
             Console.WriteLine("-Connecting to plex.. Please stand by..");
 
             StateManager = new UserStateManager();
 
-            Thread thread = new Thread(() => CheckPlexState());
-            thread.Start();
+            CheckPlexState();
+
+            //Thread thread = new Thread(() => CheckPlexState());
+            //thread.Start();
 
             Console.ReadLine();
             Terminate = true;
-            thread.Abort();
+            //thread.Abort();
 
             Console.ForegroundColor = ConsoleColor.Red;
             string terminationMessage = "\n\nTerminating Process..";

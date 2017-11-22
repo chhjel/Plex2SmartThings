@@ -1,0 +1,327 @@
+import groovy.json.JsonBuilder
+
+/**
+ *  Plex Plus
+ *
+ *  Copyright 2015 Christian Hjelseth / Jake Tebbett
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License. You may obtain a copy of the License at:
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ *  for the specific language governing permissions and limitations under the License.
+ * 
+ * VERSION CONTROL - Plex Plus Parent
+ * ###############
+ *
+ *  v2.0 - Modified Christian Hjelseth's excellent Smart App to use parent & child apps
+ * 				- Allowing multi room matching to a single player
+ * 				- Allowing flexible number of "rooms"
+ * 		 - Added support for matching against Player Name or User Name or IP Address (IP address requires Jake's modified exe)
+ *		 - Added support for on and off switches on the same state change.
+ *		 - Added disabled switch to stop automation
+ *  v2.1 - Added Europe and USA addresses in the API Info screen
+ *  v2.2 - Added App ID and Access Token to "Live Logging", just enable logging, open App and press "Done"
+ * 	v2.3 - Fixed child app bug.
+ *	v2.4 - Updated API Information to return US or EU.
+ *	v2.5 - Added "Last Event" in app to make setting up players easier.
+ *  v2.6 - Updated icon path.
+ *  v2.7 - Added USA West API Info due to new data center and also added App ID and Token independently in case new servers are introduced in the future.
+ *  v2.8 - Added MusicPlayer device handler support for Plex HT SmartApp support
+ *  v2.9 - Bug fix on namespace
+ *  v2.10- Fixed issue with debugging not working
+ *	v2.11- Added handler for creating Plex Plus Device Types
+ *	v2.12- Android fix
+ *
+ */
+
+definition(
+    name: "Plex Plus",
+    namespace: "jebbett",
+    author: "Christian Hjelseth & Jake Tebbett",
+    description: "Allows web requests to dim/turn off/on lights when plex is playing",
+    category: "My Apps",
+    iconUrl: "https://raw.githubusercontent.com/jebbett/Plex2SmartThings/PlexPlus/icon.png",
+    iconX2Url: "https://raw.githubusercontent.com/jebbett/Plex2SmartThings/PlexPlus/icon.png",
+    iconX3Url: "https://raw.githubusercontent.com/jebbett/Plex2SmartThings/PlexPlus/icon.png",
+    oauth: [displayName: "PlexServer", displayLink: ""])
+
+
+def installed() {
+    log.debug "Installed with settings: ${settings}"
+    initialize()
+}
+
+def updated() {
+    log.debug "Updated with settings: ${settings}"
+    unsubscribe()
+    initialize()
+}
+
+def initialize() {
+    // nothing needed here, since the child apps will handle preferences/subscriptions
+    // this just logs some messages for demo/information purposes
+    log.debug "there are ${childApps.size()} child smartapps"
+    childApps.each {child ->
+        log.debug "child app: ${child.label}"
+    }
+    if (!state.accessToken) {
+    	createAccessToken()
+   	}
+    
+    logWriter("APP_ID: $app.id")
+    logWriter("ACCESS_TOKEN: $state.accessToken")
+    
+    if(state.lastEvent == null){state.lastEvent = "No event recieved, please ensure that config.config is setup correctly"}
+}
+
+preferences {
+	page(name: "mainMenu")
+    page(name: "lastEvt")
+    page(name: "P2ST")
+    page(name: "instructions")
+    page(name: "pageDevice")
+    page(name: "pageDevDetails")
+    page(name: "pageDevDelete")
+    page(name: "pageDevAdd")
+    
+}
+
+def mainMenu() {
+
+    dynamicPage(name: "mainMenu", title: "Rooms", install: true, uninstall: true, submitOnChange: true) {              
+       
+        section {
+            app(name: "childapp", appName: "Plex Plus Child", namespace: "jebbett", title: "Create New Room", multiple: true)
+            }	
+        
+        section() { 
+        	href(name: "instructions", title: "Instructions", required: false, page: "instructions", description: "how to link this app to Plex!")
+    	}
+        section() { 
+        	href(name: "pageDevice", title: "Create Virtual Device", required: false, page: "pageDevice", description: "create a virtual device here")
+    	}
+
+	    if (!state.accessToken) {createAccessToken()}
+
+        // Enables logging debug only when enabled
+        section(title: "ADVANCED") {
+       		paragraph "If you experiencing issues please enable logging to help troubleshoot"
+            input "debugLogging", "bool", title: "Debug Logging...", required: false, defaultValue: false, submitOnChange: true
+            href(name: "usersBal", title: "Last Event", required: false, page: "lastEvt", description: "view last event recieved by app")
+            href(name: "P2STd", title: "Plex2SmartThings Setup Details", required: false, page: "P2ST", description: "information for setting up the Plex2SmartThings program if used")
+    	}
+    }
+}
+
+def instructions() {
+
+    dynamicPage(name: "instructions", title: "Instructions", install: false, uninstall: false) {        
+        section(title: "Choose a method of linking to Plex") {
+        	paragraph "There are currently two methods of linking Plex to SmartThings"
+        }
+        
+        section(title: "1. Plex2SmartThings program on your Plex server")
+        section(title: "This is the preferred method if your Plex server runs on a windows computer, as most of the work is done by a program that runs on the server and avoids reliance of ST to constantly monitor your plex server, however does require some minor technical ability. This is using the windows application created by ChristianH and modified by EntityXenon"){
+        }
+        section(title: "2. Custom Device Type for Plex")
+        section(title: "This is the only method if your Plex server is not running on a windows computer as works with all variants of Plex Server, but does rely on SmartThings checking the Plex status every 10 seconds. This is using the Device Handler and smart app created by iBeech."){
+        }
+   }
+        
+}
+
+private getSortedDevices() {
+	return getChildDevices().sort{it.displayName}
+}
+
+def pageDevice() {
+
+    dynamicPage(name: "pageDevice", title: "Create Device", install: false, uninstall: false) {        
+
+
+	section() {
+        
+      def childDevs = []
+      def i = 1 as int
+        
+        getSortedDevices().each { dev ->
+        	href(name: "pageDevDetails$i", title:"$dev.label", description: "$dev.deviceNetworkId", params: [devi: dev.deviceNetworkId, devstate: dev.statusState?.value], page: "pageDevDetails", required: false, image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/setting_blue.png")
+            i++
+            }
+        }
+        section(){
+        	href(name: "pageDevDetails", title:"Create New Device", description: "Please ensure the custom device type is also installed", params: [devi: false], page: "pageDevDetails", required: false, image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/settings_red.png")
+    	}
+	}
+}
+
+def pageDevDetails(params) {
+    
+    dynamicPage(name: "pageDevDetails", title: "Device Details", install: false, uninstall: false) {
+		if(params.devi){
+			section("Name & Status") {
+        		paragraph("${params.devi}")
+                paragraph("${params.devstate}")
+            }
+            section("DELETE") {
+            	href(name: "pageDevDelete", title:"DELETE DEVICE", description: "ONLY PRESS IF YOU ARE SURE!", params: [devi: "$params.devi"], page: "pageDevDelete", required: false, image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/close_red.png")
+        	}
+   		}else{
+       		section() {
+        		paragraph("Create a new Plex+ Reporting Device")
+                input "devName", type: "text", title: "Name:", required:false, submitOnChange: true, defaultValue: "New Plex Plus Device"
+            	href(name: "pageDevAdd", title:"Create Device", description: "", params: [devi: "$params.devi"], page: "pageDevAdd", required: false, image: "https://cdn0.iconfinder.com/data/icons/round-ui-icons/128/add_green.png")
+        	}
+       
+        
+        
+		}        
+   }
+        
+}
+
+
+def pageDevAdd(params) {
+	if(settings.devName){
+    	def DeviceID = "PlexPlusDev:"+settings.devName
+		def existingDevice = getChildDevice(DeviceID)
+		if(!existingDevice) {
+        	def newTrigger = addChildDevice("jebbett", "Plex Plus Device", DeviceID, null, [name: settings.devName, label: settings.devName])
+		}
+        pageDevice()
+	}else{
+    	dynamicPage(name: "pageDevAdd", title: "Device Details", install: false, uninstall: false) {        
+			section() {
+            	paragraph("Name not set")
+        	}
+		}
+	}
+}
+
+def pageDevDelete(params) {
+    deleteChildDevice(params.devi)
+	pageDevice()
+}
+
+
+
+def lastEvt() {
+
+    dynamicPage(name: "lastEvt", title: "Last Event", install: false, uninstall: false) {        
+        section(title: "Details of Last Event Recieved") {
+        	paragraph "$state.lastEvent"
+        }
+    }
+}
+
+def P2ST() {
+
+    dynamicPage(name: "P2ST", title: "Plex2SmartThings Information", install: false, uninstall: false) {
+    	section(title: "App ID") {
+        	paragraph "$app.id"
+        }
+        
+        section(title: "Access Token") {
+        	paragraph "$state.accessToken"
+        }
+        
+        section(title: "API Information") { 
+        	href url: "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/appinfo?access_token=${state.accessToken}",
+            		style:"embedded", required:false, title:"API Info US Standard", description: "Tap to view Info"
+            
+            href url: "https://graph-na02-useast1.api.smartthings.com/api/smartapps/installations/${app.id}/appinfo3?access_token=${state.accessToken}",
+            		style:"embedded", required:false, title:"API Info US East", description: "Tap to view Info"
+    	
+        	href url: "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/appinfo2?access_token=${state.accessToken}", 
+            		style:"embedded", required:false, title:"API Info Europe", description: "Tap to view Info"
+    	}
+        
+    }
+}
+
+
+// These Methods Generate Json for you Info Only
+def appInfoJson() {
+	def configJson = new groovy.json.JsonOutput().toJson([
+    	appId:        app.id,
+    	accessToken:  state.accessToken,
+    	
+    	onPlay: 	"https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onplay",
+		onPause:	"https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onpause",
+		onStop:		"https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onstop"
+        
+    ])
+
+    def configString = new groovy.json.JsonOutput().prettyPrint(configJson)
+    render contentType: "text/plain", data: configString
+}
+
+def appInfoJson2() {
+	def configJson = new groovy.json.JsonOutput().toJson([
+    	appId:        app.id,
+    	accessToken:  state.accessToken,
+
+    	onPlay: 	"https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onplay",
+		onPause:	"https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onpause",
+		onStop:		"https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onstop"        
+        
+    ])
+
+    def configString = new groovy.json.JsonOutput().prettyPrint(configJson)
+    render contentType: "text/plain", data: configString
+}
+
+def appInfoJson3() {
+	def configJson = new groovy.json.JsonOutput().toJson([
+    	appId:        app.id,
+    	accessToken:  state.accessToken,
+
+    	onPlay: 	"https://graph-na02-useast1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onplay",
+		onPause:	"https://graph-na02-useast1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onpause",
+		onStop:		"https://graph-na02-useast1.api.smartthings.com/api/smartapps/installations/${app.id}/statechanged/onstop"        
+        
+    ])
+
+    def configString = new groovy.json.JsonOutput().prettyPrint(configJson)
+    render contentType: "text/plain", data: configString
+}
+
+mappings {
+  path("/statechanged/:command") 	{ action: [ GET: "OnCommandRecieved" ] }
+  path("/appinfo") 					{ action: [ GET: "appInfoJson"]   }
+  path("/appinfo2") 				{ action: [ GET: "appInfoJson2"]   }
+  path("/appinfo3") 				{ action: [ GET: "appInfoJson3"]   }
+}
+
+private def logWriter(value) {
+	if (debugLogging) {log.debug "${value}"}	
+}
+
+
+def OnCommandRecieved() {
+	def command = params.command
+	def userName = params.user
+	def playerName = params.player
+    def playerIP = params.ipadd
+	def mediaType = params.type
+
+	// If Plex2SmartThings.exe has not been modified to return IP Address (ipadd) then return No IP to stop false triggering.
+    if (playerIP == null) {
+        playerIP = "No IP Returned"
+    }
+    
+	childApps.each { child ->
+    	child.AppCommandRecieved(command, userName, playerName, playerIP, mediaType)
+    }
+	return
+}
+
+def StoreLastEvent(command, userName, playerName, playerIP, mediaType) {
+
+	state.lastEvent = " User Name: $userName \n Player Name: $playerName \n IP Address: $playerIP \n Command: $command \n Media Type: $mediaType"
+	return
+}
